@@ -9,7 +9,7 @@ export default function ProductosPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   // Catálogo completo de productos
-  const productos = [
+  const productos = useMemo(() => [
     // Medicamentos e insumos médicos
     { id: 1, nombre: "Lidocaína 50 ml", descripcion: "unidad | caja x20", categoria: "medicamentos", disponible: true, etiqueta: "NUEVO" },
     { id: 2, nombre: "Wypall Yumbo", descripcion: "890 paños", categoria: "medicamentos", disponible: true, etiqueta: "STOCK" },
@@ -58,7 +58,7 @@ export default function ProductosPage() {
     { id: 35, nombre: "Guantes estériles", descripcion: "caja x50 pares", categoria: "proteccion", disponible: true, etiqueta: "ESTÉRIL" },
     { id: 36, nombre: "Guantes de látex", descripcion: "caja completa", categoria: "proteccion", disponible: true, etiqueta: "LÁTEX" },
     { id: 37, nombre: "Campo estéril 1x1", descripcion: "1x1 metro", categoria: "proteccion", disponible: true, etiqueta: "1x1" },
-  ];
+  ], []);
 
   const categorias = [
     { id: "medicamentos", nombre: "💉 Medicamentos", emoji: "💉", count: productos.filter(p => p.categoria === "medicamentos").length },
@@ -77,10 +77,10 @@ export default function ProductosPage() {
       const matchesCategory = !selectedCategory || producto.categoria === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, productos]);
 
-  const getCategoryColor = (categoria) => {
-    const colors = {
+  const getCategoryColor = (categoria: string) => {
+    const colors: Record<string, string> = {
       medicamentos: "blue",
       soluciones: "sky", 
       insumos: "cyan",
@@ -91,8 +91,8 @@ export default function ProductosPage() {
     return colors[categoria] || "blue";
   };
 
-  const getProductIcon = (categoria) => {
-    const icons = {
+  const getProductIcon = (categoria: string) => {
+    const icons: Record<string, string> = {
       medicamentos: "💊",
       soluciones: "💧",
       insumos: "🪥",
