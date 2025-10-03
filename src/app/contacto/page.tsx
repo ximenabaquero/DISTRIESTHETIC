@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
 export default function ContactoPage() {
@@ -37,9 +38,18 @@ export default function ContactoPage() {
       <nav className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold text-blue-600">
-              DISTRIESTHETIC
-            </Link>
+            <div className="flex items-center">
+              <Image
+                src="/logodistsin.png"
+                alt="DISTRIESTHETIC Logo"
+                width={200}
+                height={80}
+                className="h-16 w-auto"
+              />
+              <span className="text-2xl font-bold text-blue-600 ml-3">
+                DISTRIESTHETIC
+              </span>
+            </div>
             <div className="flex space-x-6">
               <Link href="/" className="text-gray-700 hover:text-blue-600">
                 Inicio
@@ -95,7 +105,7 @@ export default function ContactoPage() {
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="tu@email.com"
+                  placeholder="charliegil2704@gmail.com"
                 />
               </div>
 
@@ -110,7 +120,7 @@ export default function ContactoPage() {
                   value={formData.telefono}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="+57 300 123 4567"
+                  placeholder="+57 324 661 4270"
                 />
               </div>
 
@@ -199,7 +209,7 @@ export default function ContactoPage() {
                     <h4 className="font-semibold text-gray-800">Email</h4>
                     <p className="text-gray-600">
                       {/* TODO: Add real email */}
-                      info@distriesthetic.com
+                      charliegil2704@gmail.com
                     </p>
                   </div>
                 </div>
@@ -230,8 +240,8 @@ export default function ContactoPage() {
                     <h4 className="font-semibold text-gray-800">Horario de Atención</h4>
                     <p className="text-gray-600">
                       {/* TODO: Add real schedule */}
-                      Lunes a Viernes: 8:00 AM - 6:00 PM<br />
-                      Sábados: 8:00 AM - 2:00 PM
+                      Lunes a Viernes: 6:00 AM - 9:00 PM<br />
+                      Sábados: 8:00 AM - 8:00 PM
                     </p>
                   </div>
                 </div>
