@@ -2,19 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { type Producto } from "@/data/productos";
 
 export default function ProductosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [adminMode, setAdminMode] = useState(false);
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const dirtyRef = useRef<Set<number>>(new Set());
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const [pendingPassword, setPendingPassword] = useState("");
 
   // Fetch inicial desde API
   useEffect(() => {
@@ -32,62 +27,7 @@ export default function ProductosPage() {
     fetchData();
   }, []);
 
-  // Persistencia en lote (debounce 800ms)
-  const scheduleSave = () => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(async () => {
-      if (dirtyRef.current.size === 0) return;
-      setSaving(true);
-      try {
-        const payload = data
-          .filter(p => dirtyRef.current.has(p.id))
-          .map(p => ({ id: p.id, precio: p.precio, stock: p.stock }));
-        const res = await fetch('/api/productos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.ok) {
-          setData(json.productos as Producto[]);
-          dirtyRef.current.clear();
-        }
-      } catch (e) {
-        console.error('Error guardando cambios', e);
-      } finally {
-        setSaving(false);
-      }
-    }, 800);
-  };
 
-  // Guardado inmediato (sin esperar debounce)
-  const flushSave = async () => {
-    if (saving || dirtyRef.current.size === 0) return;
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-      debounceTimer.current = null;
-    }
-    setSaving(true);
-    try {
-      const payload = data
-        .filter(p => dirtyRef.current.has(p.id))
-        .map(p => ({ id: p.id, precio: p.precio, stock: p.stock }));
-      const res = await fetch('/api/productos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if (json.ok) {
-        setData(json.productos as Producto[]);
-        dirtyRef.current.clear();
-      }
-    } catch (e) {
-      console.error('Error guardando cambios (flush)', e);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Catálogo completo de productos
   const productos = data;
@@ -177,53 +117,9 @@ export default function ProductosPage() {
             Encuentra todos nuestros productos médicos con registro INVIMA y garantía de calidad
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {!adminMode && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  placeholder="Clave administrador"
-                  value={pendingPassword}
-                  onChange={(e) => setPendingPassword(e.target.value)}
-                  className="px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                />
-                <button
-                  onClick={() => {
-                    if (pendingPassword === "distri2025") {
-                      setAdminMode(true);
-                      setPendingPassword("");
-                    } else {
-                      alert("Clave incorrecta");
-                    }
-                  }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold"
-                >
-                  Entrar Admin
-                </button>
+              <div className="flex justify-center">
+                <a href="/admin" className="text-sm text-blue-600 hover:underline font-medium">Ir al panel de administración &rarr;</a>
               </div>
-            )}
-            {adminMode && (
-              <div className="flex flex-col sm:flex-row items-center gap-3 bg-blue-50 border border-blue-200 px-4 py-3 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-700 font-semibold text-sm">
-                    Modo Admin {saving ? '— Guardando…' : dirtyRef.current.size > 0 ? '— Cambios pendientes' : '— Sin cambios'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={flushSave}
-                    disabled={saving || dirtyRef.current.size === 0}
-                    className={`text-xs px-3 py-1 rounded font-semibold transition-colors ${saving ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : dirtyRef.current.size === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                    title={dirtyRef.current.size === 0 ? 'No hay cambios por guardar' : 'Guardar inmediatamente'}
-                  >
-                    Guardar ahora
-                  </button>
-                  <button
-                    onClick={() => setAdminMode(false)}
-                    className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                  >Salir</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -310,49 +206,15 @@ export default function ProductosPage() {
                     <div className="mb-4 space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-semibold text-gray-700">Precio:</span>
-                        {!adminMode && (
-                          <span className="text-gray-800 font-bold">
-                            {producto.precio != null ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(producto.precio) : '—'}
-                          </span>
-                        )}
-                        {adminMode && (
-                          <input
-                            type="number"
-                            className="w-28 px-2 py-1 border rounded text-gray-800 text-right"
-                            value={producto.precio ?? ''}
-                            placeholder="Precio"
-                            onChange={(e) => {
-                              const value = e.target.value === '' ? null : Number(e.target.value);
-                              const updated = data.map(p => p.id === producto.id ? { ...p, precio: value } : p);
-                              setData(updated);
-                              dirtyRef.current.add(producto.id);
-                              scheduleSave();
-                            }}
-                          />
-                        )}
+                        <span className="text-gray-800 font-bold">
+                          {producto.precio != null ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(producto.precio) : '—'}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-semibold text-gray-700">Stock:</span>
-                        {!adminMode && (
-                          <span className={producto.stock > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'}>
-                            {producto.stock > 0 ? `${producto.stock} unid.` : 'Sin stock'}
-                          </span>
-                        )}
-                        {adminMode && (
-                          <input
-                            type="number"
-                            className="w-20 px-2 py-1 border rounded text-gray-800 text-right"
-                            value={producto.stock}
-                            min={0}
-                            onChange={(e) => {
-                              const value = Number(e.target.value);
-                              const updated = data.map(p => p.id === producto.id ? { ...p, stock: value } : p);
-                              setData(updated);
-                              dirtyRef.current.add(producto.id);
-                              scheduleSave();
-                            }}
-                          />
-                        )}
+                        <span className={producto.stock > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'}>
+                          {producto.stock > 0 ? `${producto.stock} unid.` : 'Sin stock'}
+                        </span>
                       </div>
                     </div>
                   
