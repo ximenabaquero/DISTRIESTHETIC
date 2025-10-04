@@ -2,41 +2,62 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useMemo, useEffect } from "react";
-import { productosBase, type Producto } from "@/data/productos";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { type Producto } from "@/data/productos";
 
 export default function ProductosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [adminMode, setAdminMode] = useState(false);
-  const [data, setData] = useState<Producto[]>(productosBase);
+  const [data, setData] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const dirtyRef = useRef<Set<number>>(new Set());
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [pendingPassword, setPendingPassword] = useState("");
 
-  // Cargar datos guardados (precios y stock) desde localStorage
+  // Fetch inicial desde API
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("productosDataV1");
-      if (stored) {
-        const parsed: Producto[] = JSON.parse(stored);
-        // Merge por id para no perder nuevos productos agregados al base
-        const merged = productosBase.map(p => {
-          const override = parsed.find(x => x.id === p.id);
-          return override ? { ...p, precio: override.precio, stock: override.stock } : p;
-        });
-        setData(merged);
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/productos', { cache: 'no-store' });
+        const json = await res.json();
+        if (json.ok) setData(json.productos as Producto[]);
+      } catch (e) {
+        console.error('Error cargando productos', e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.warn("No se pudo cargar datos locales", e);
-    }
+    };
+    fetchData();
   }, []);
 
-  const persist = (next: Producto[]) => {
-    setData(next);
-    try {
-      localStorage.setItem("productosDataV1", JSON.stringify(next));
-    } catch (e) {
-      console.warn("No se pudo guardar", e);
-    }
+  // Persistencia en lote (debounce 800ms)
+  const scheduleSave = () => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(async () => {
+      if (dirtyRef.current.size === 0) return;
+      setSaving(true);
+      try {
+        const payload = data
+          .filter(p => dirtyRef.current.has(p.id))
+          .map(p => ({ id: p.id, precio: p.precio, stock: p.stock }));
+        const res = await fetch('/api/productos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.ok) {
+          setData(json.productos as Producto[]);
+          dirtyRef.current.clear();
+        }
+      } catch (e) {
+        console.error('Error guardando cambios', e);
+      } finally {
+        setSaving(false);
+      }
+    }, 800);
   };
 
   // Catálogo completo de productos
@@ -153,7 +174,9 @@ export default function ProductosPage() {
             )}
             {adminMode && (
               <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg">
-                <span className="text-blue-700 font-semibold text-sm">Modo Admin Activo</span>
+                <span className="text-blue-700 font-semibold text-sm">
+                  Modo Admin {saving ? '— Guardando…' : dirtyRef.current.size > 0 ? '— Cambios pendientes' : '— Sin cambios'}
+                </span>
                 <button
                   onClick={() => setAdminMode(false)}
                   className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
@@ -215,7 +238,9 @@ export default function ProductosPage() {
         </div>
 
         {/* Products Grid */}
-        {productosFiltrados.length > 0 ? (
+        {loading ? (
+          <div className="text-center text-gray-500 py-20">Cargando productos...</div>
+        ) : productosFiltrados.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {productosFiltrados.map((producto) => {
               const color = getCategoryColor(producto.categoria);
@@ -258,7 +283,9 @@ export default function ProductosPage() {
                             onChange={(e) => {
                               const value = e.target.value === '' ? null : Number(e.target.value);
                               const updated = data.map(p => p.id === producto.id ? { ...p, precio: value } : p);
-                              persist(updated);
+                              setData(updated);
+                              dirtyRef.current.add(producto.id);
+                              scheduleSave();
                             }}
                           />
                         )}
@@ -279,7 +306,9 @@ export default function ProductosPage() {
                             onChange={(e) => {
                               const value = Number(e.target.value);
                               const updated = data.map(p => p.id === producto.id ? { ...p, stock: value } : p);
-                              persist(updated);
+                              setData(updated);
+                              dirtyRef.current.add(producto.id);
+                              scheduleSave();
                             }}
                           />
                         )}
