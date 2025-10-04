@@ -2,6 +2,22 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { productosBase, type Producto } from '@/data/productos';
 
+// Supabase (modo híbrido). Usamos import dinámico para no romper build si no está instalado todavía.
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+interface ProductoOverrideRow { id: number; precio: number | null; stock: number | null }
+
+let supabase: SupabaseClient | null = null;
+async function getSupabase(): Promise<SupabaseClient | null> {
+  if (supabase) return supabase;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY; // service role para operaciones de escritura seguras en el servidor.
+  if (!url || !key) return null;
+  const { createClient } = await import('@supabase/supabase-js');
+  supabase = createClient(url, key, { auth: { persistSession: false } });
+  return supabase;
+}
+
 const dataFile = path.join(process.cwd(), 'data', 'productos.json');
 
 interface ProductosFile {
@@ -34,11 +50,51 @@ function merge(base: Producto[], overrides: Producto[]): Producto[] {
 }
 
 export async function getAllProductos(): Promise<Producto[]> {
+  const sb = await getSupabase();
+  if (sb) {
+    const { data, error } = await sb.from('productos_overrides').select('id, precio, stock');
+    if (error) {
+      console.error('Supabase getAllProductos error:', error.message);
+    }
+    if (data) {
+      const overrides: Producto[] = data.map((r: ProductoOverrideRow) => ({
+        id: r.id,
+        nombre: '', // se rellenará desde base en merge
+        descripcion: '',
+        categoria: '',
+        disponible: true,
+        etiqueta: '',
+        precio: r.precio === null ? null : Number(r.precio),
+        stock: r.stock ?? 0,
+      }));
+      // Merge manual: buscamos en productosBase por id
+      const merged = productosBase.map(b => {
+        const o = overrides.find(x => x.id === b.id);
+        return o ? { ...b, precio: o.precio, stock: o.stock } : b;
+      });
+      return merged;
+    }
+  }
+  // fallback archivo
   const file = await readFile();
   return merge(productosBase, file.productos);
 }
 
 export async function updateProducto(id: number, data: Partial<Pick<Producto, 'precio' | 'stock'>>): Promise<Producto | null> {
+  const sb = await getSupabase();
+  if (sb) {
+  const updatePayload: { id: number; precio?: number | null; stock?: number } = { id };
+    if (data.precio !== undefined) updatePayload.precio = data.precio;
+    if (data.stock !== undefined) updatePayload.stock = data.stock;
+    const { error } = await sb.from('productos_overrides').upsert(updatePayload, { onConflict: 'id' });
+    if (error) {
+      console.error('Supabase updateProducto error:', error.message);
+    } else {
+      const all = await getAllProductos();
+      return all.find(p => p.id === id) || null;
+    }
+  }
+  // fallback archivo
   const file = await readFile();
   const existing = file.productos.find(p => p.id === id);
   if (existing) {
@@ -55,6 +111,16 @@ export async function updateProducto(id: number, data: Partial<Pick<Producto, 'p
 }
 
 export async function bulkUpdate(list: Array<{ id: number; precio: number | null; stock: number }>): Promise<Producto[]> {
+  const sb = await getSupabase();
+  if (sb) {
+    const payload = list.map(i => ({ id: i.id, precio: i.precio, stock: i.stock }));
+    const { error } = await sb.from('productos_overrides').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.error('Supabase bulkUpdate error:', error.message);
+    } else {
+      return getAllProductos();
+    }
+  }
   const file = await readFile();
   for (const item of list) {
     const ex = file.productos.find(p => p.id === item.id);
