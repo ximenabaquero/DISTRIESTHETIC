@@ -60,6 +60,35 @@ export default function ProductosPage() {
     }, 800);
   };
 
+  // Guardado inmediato (sin esperar debounce)
+  const flushSave = async () => {
+    if (saving || dirtyRef.current.size === 0) return;
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
+    setSaving(true);
+    try {
+      const payload = data
+        .filter(p => dirtyRef.current.has(p.id))
+        .map(p => ({ id: p.id, precio: p.precio, stock: p.stock }));
+      const res = await fetch('/api/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setData(json.productos as Producto[]);
+        dirtyRef.current.clear();
+      }
+    } catch (e) {
+      console.error('Error guardando cambios (flush)', e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Catálogo completo de productos
   const productos = data;
 
@@ -173,14 +202,26 @@ export default function ProductosPage() {
               </div>
             )}
             {adminMode && (
-              <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg">
-                <span className="text-blue-700 font-semibold text-sm">
-                  Modo Admin {saving ? '— Guardando…' : dirtyRef.current.size > 0 ? '— Cambios pendientes' : '— Sin cambios'}
-                </span>
-                <button
-                  onClick={() => setAdminMode(false)}
-                  className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                >Salir</button>
+              <div className="flex flex-col sm:flex-row items-center gap-3 bg-blue-50 border border-blue-200 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-700 font-semibold text-sm">
+                    Modo Admin {saving ? '— Guardando…' : dirtyRef.current.size > 0 ? '— Cambios pendientes' : '— Sin cambios'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={flushSave}
+                    disabled={saving || dirtyRef.current.size === 0}
+                    className={`text-xs px-3 py-1 rounded font-semibold transition-colors ${saving ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : dirtyRef.current.size === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title={dirtyRef.current.size === 0 ? 'No hay cambios por guardar' : 'Guardar inmediatamente'}
+                  >
+                    Guardar ahora
+                  </button>
+                  <button
+                    onClick={() => setAdminMode(false)}
+                    className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                  >Salir</button>
+                </div>
               </div>
             )}
           </div>
