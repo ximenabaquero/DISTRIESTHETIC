@@ -2,63 +2,45 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { productosBase, type Producto } from "@/data/productos";
 
 export default function ProductosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [adminMode, setAdminMode] = useState(false);
+  const [data, setData] = useState<Producto[]>(productosBase);
+  const [pendingPassword, setPendingPassword] = useState("");
+
+  // Cargar datos guardados (precios y stock) desde localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("productosDataV1");
+      if (stored) {
+        const parsed: Producto[] = JSON.parse(stored);
+        // Merge por id para no perder nuevos productos agregados al base
+        const merged = productosBase.map(p => {
+          const override = parsed.find(x => x.id === p.id);
+          return override ? { ...p, precio: override.precio, stock: override.stock } : p;
+        });
+        setData(merged);
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar datos locales", e);
+    }
+  }, []);
+
+  const persist = (next: Producto[]) => {
+    setData(next);
+    try {
+      localStorage.setItem("productosDataV1", JSON.stringify(next));
+    } catch (e) {
+      console.warn("No se pudo guardar", e);
+    }
+  };
 
   // Catálogo completo de productos
-  const productos = useMemo(() => [
-    // Medicamentos e insumos médicos
-    { id: 1, nombre: "Lidocaína 50 ml", descripcion: "unidad | caja x20", categoria: "medicamentos", disponible: true, etiqueta: "NUEVO" },
-    { id: 2, nombre: "Wypall Yumbo", descripcion: "890 paños", categoria: "medicamentos", disponible: true, etiqueta: "STOCK" },
-    { id: 3, nombre: "Adrenalina", descripcion: "ampolla", categoria: "medicamentos", disponible: true, etiqueta: "DISPONIBLE" },
-    { id: 4, nombre: "Bicarbonato", descripcion: "ampolla", categoria: "medicamentos", disponible: true, etiqueta: "STOCK" },
-    { id: 5, nombre: "Clindamicina 600 mg", descripcion: "ampolla", categoria: "medicamentos", disponible: true, etiqueta: "600mg" },
-    { id: 6, nombre: "Gentamicina 80 mg", descripcion: "ampolla", categoria: "medicamentos", disponible: true, etiqueta: "80mg" },
-    { id: 7, nombre: "Enoxaparina sódica 40 mg", descripcion: "40 mg", categoria: "medicamentos", disponible: true, etiqueta: "40mg" },
-    { id: 8, nombre: "Cefalexina 500 mg", descripcion: "caja x10", categoria: "medicamentos", disponible: true, etiqueta: "x10" },
-    { id: 9, nombre: "Propofol 20 ml", descripcion: "20 ml", categoria: "medicamentos", disponible: true, etiqueta: "20ml" },
-    { id: 10, nombre: "Tramadol clorhidrato 50 mg/ml", descripcion: "50 mg/ml", categoria: "medicamentos", disponible: true, etiqueta: "50mg" },
-    { id: 11, nombre: "Dexametazona 8 mg/2 ml", descripcion: "caja x100", categoria: "medicamentos", disponible: true, etiqueta: "x100" },
-    { id: 12, nombre: "Diclofenaco 75 mg", descripcion: "caja x100", categoria: "medicamentos", disponible: true, etiqueta: "x100" },
-
-    // Soluciones y líquidos
-    { id: 13, nombre: "Frasco 2.5 L", descripcion: "sin tapa | con tapa", categoria: "soluciones", disponible: true, etiqueta: "2.5L" },
-    { id: 14, nombre: "Solución salina 500 ml", descripcion: "500 ml", categoria: "soluciones", disponible: true, etiqueta: "500ml" },
-    { id: 15, nombre: "Solución salina 1.000 ml", descripcion: "1.000 ml", categoria: "soluciones", disponible: true, etiqueta: "1L" },
-    { id: 16, nombre: "Lactato de Ringer 500 ml", descripcion: "500 ml", categoria: "soluciones", disponible: true, etiqueta: "500ml" },
-
-    // Insumos médicos
-    { id: 17, nombre: "Microbrush", descripcion: "x100 unidades", categoria: "insumos", disponible: true, etiqueta: "x100" },
-    { id: 18, nombre: "Jeringas 3 ml", descripcion: "caja x100", categoria: "insumos", disponible: true, etiqueta: "3ml" },
-    { id: 19, nombre: "Jeringas 5 ml", descripcion: "caja x100", categoria: "insumos", disponible: true, etiqueta: "5ml" },
-    { id: 20, nombre: "Jeringas 10 ml", descripcion: "caja x100", categoria: "insumos", disponible: true, etiqueta: "10ml" },
-    { id: 21, nombre: "Jeringas 20 ml", descripcion: "caja x50", categoria: "insumos", disponible: true, etiqueta: "20ml" },
-    { id: 22, nombre: "Agujas 30G x ½", descripcion: "caja completa", categoria: "insumos", disponible: true, etiqueta: "30G" },
-    { id: 23, nombre: "Yelcos #22", descripcion: "caja x50", categoria: "insumos", disponible: true, etiqueta: "#22" },
-    { id: 24, nombre: "Tubos para plasma", descripcion: "100 unid., tapa azul", categoria: "insumos", disponible: true, etiqueta: "x100" },
-
-    // Desinfectantes y químicos
-    { id: 25, nombre: "Glutamida", descripcion: "galón 4.000 ml", categoria: "quimicos", disponible: true, etiqueta: "4L" },
-    { id: 26, nombre: "Benzaldina", descripcion: "galón 4.000 ml", categoria: "quimicos", disponible: true, etiqueta: "4L" },
-
-    // Ropa e indumentaria médica
-    { id: 27, nombre: "Medias antiembólicas", descripcion: "par", categoria: "ropa", disponible: true, etiqueta: "PAR" },
-    { id: 28, nombre: "Bata cirujano manga larga", descripcion: "manga larga", categoria: "ropa", disponible: true, etiqueta: "CIRUJANO" },
-    { id: 29, nombre: "Bata paciente manga sisa", descripcion: "manga sisa", categoria: "ropa", disponible: true, etiqueta: "PACIENTE" },
-    { id: 30, nombre: "Polainas", descripcion: "50 pares", categoria: "ropa", disponible: true, etiqueta: "x50" },
-    { id: 31, nombre: "Gorros tipo oruga", descripcion: "100 unidades", categoria: "ropa", disponible: true, etiqueta: "x100" },
-    { id: 32, nombre: "Sábana desechable para camilla", descripcion: "para camilla", categoria: "ropa", disponible: true, etiqueta: "DESECHABLE" },
-
-    // Protección personal
-    { id: 33, nombre: "Tapabocas empaque individual", descripcion: "empaque x50", categoria: "proteccion", disponible: true, etiqueta: "x50" },
-    { id: 34, nombre: "Guantes de nitrilo", descripcion: "caja x50 pares", categoria: "proteccion", disponible: true, etiqueta: "NITRILO" },
-    { id: 35, nombre: "Guantes estériles", descripcion: "caja x50 pares", categoria: "proteccion", disponible: true, etiqueta: "ESTÉRIL" },
-    { id: 36, nombre: "Guantes de látex", descripcion: "caja completa", categoria: "proteccion", disponible: true, etiqueta: "LÁTEX" },
-    { id: 37, nombre: "Campo estéril 1x1", descripcion: "1x1 metro", categoria: "proteccion", disponible: true, etiqueta: "1x1" },
-  ], []);
+  const productos = data;
 
   const categorias = [
     { id: "medicamentos", nombre: "💉 Medicamentos", emoji: "💉", count: productos.filter(p => p.categoria === "medicamentos").length },
@@ -144,6 +126,41 @@ export default function ProductosPage() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Encuentra todos nuestros productos médicos con registro INVIMA y garantía de calidad
           </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {!adminMode && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  placeholder="Clave administrador"
+                  value={pendingPassword}
+                  onChange={(e) => setPendingPassword(e.target.value)}
+                  className="px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <button
+                  onClick={() => {
+                    if (pendingPassword === "distri2025") {
+                      setAdminMode(true);
+                      setPendingPassword("");
+                    } else {
+                      alert("Clave incorrecta");
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold"
+                >
+                  Entrar Admin
+                </button>
+              </div>
+            )}
+            {adminMode && (
+              <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg">
+                <span className="text-blue-700 font-semibold text-sm">Modo Admin Activo</span>
+                <button
+                  onClick={() => setAdminMode(false)}
+                  className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                >Salir</button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search and Filter Section */}
@@ -200,7 +217,7 @@ export default function ProductosPage() {
         {/* Products Grid */}
         {productosFiltrados.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {productosFiltrados.map((producto) => {
+              {productosFiltrados.map((producto) => {
               const color = getCategoryColor(producto.categoria);
               return (
                 <div
@@ -222,6 +239,52 @@ export default function ProductosPage() {
                   <p className="text-gray-600 text-sm mb-4">
                     {producto.descripcion}
                   </p>
+
+                    {/* Precio y stock */}
+                    <div className="mb-4 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold text-gray-700">Precio:</span>
+                        {!adminMode && (
+                          <span className="text-gray-800 font-bold">
+                            {producto.precio != null ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(producto.precio) : '—'}
+                          </span>
+                        )}
+                        {adminMode && (
+                          <input
+                            type="number"
+                            className="w-28 px-2 py-1 border rounded text-gray-800 text-right"
+                            value={producto.precio ?? ''}
+                            placeholder="Precio"
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : Number(e.target.value);
+                              const updated = data.map(p => p.id === producto.id ? { ...p, precio: value } : p);
+                              persist(updated);
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold text-gray-700">Stock:</span>
+                        {!adminMode && (
+                          <span className={producto.stock > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'}>
+                            {producto.stock > 0 ? `${producto.stock} unid.` : 'Sin stock'}
+                          </span>
+                        )}
+                        {adminMode && (
+                          <input
+                            type="number"
+                            className="w-20 px-2 py-1 border rounded text-gray-800 text-right"
+                            value={producto.stock}
+                            min={0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              const updated = data.map(p => p.id === producto.id ? { ...p, stock: value } : p);
+                              persist(updated);
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
                   
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-semibold px-2 py-1 bg-${color}-50 text-${color}-700 rounded-full`}>
@@ -230,7 +293,7 @@ export default function ProductosPage() {
                     <button
                       onClick={() => {
                         const whatsappNumber = "3246614270";
-                        const message = `Hola, me interesa el producto: ${producto.nombre} - ${producto.descripcion}`;
+                        const message = `Hola, me interesa el producto: ${producto.nombre} - ${producto.descripcion}${producto.precio ? ` | Precio mostrado: ${new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(producto.precio)}` : ''}`;
                         const whatsappUrl = `https://wa.me/57${whatsappNumber}?text=${encodeURIComponent(message)}`;
                         window.open(whatsappUrl, "_blank");
                       }}
