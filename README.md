@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Proyecto DISTRIESTHETIC
 
-## Getting Started
+Aplicación construida con Next.js 15 + Turbopack para gestionar el catálogo de productos de DISTRIESTHETIC.
 
-First, run the development server:
+## Desarrollo local
 
-```bash
+```powershell
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La app queda disponible en `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Panel administrativo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Acceso desde `/admin` usando el correo configurado en `NEXT_PUBLIC_ADMIN_EMAIL` (o `ADMIN_EMAIL`) y la contraseña `NEXT_PUBLIC_ADMIN_PASSWORD`.
+- Permite editar precio y stock masivamente y **subir/eliminar imágenes** por producto.
+- Las imágenes se guardan en `public/uploads`. Puedes subir archivos `.jpg`, `.png`, `.webp`, etc. (el nombre se genera automáticamente).
 
-## Learn More
+## API relevante
 
-To learn more about Next.js, take a look at the following resources:
+- `GET /api/productos` → catálogo fusionado (base + overrides).
+- `POST /api/productos` → actualizar precio/stock en lote.
+- `POST /api/productos/:id/imagen` → subir imagen de producto.
+- `DELETE /api/productos/:id/imagen` → eliminar imagen actual.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Todas las operaciones usan archivos JSON locales por defecto y pueden integrarse con Supabase si se configuran las variables `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
+Si usas Supabase, añade la columna `imagen_url TEXT` a la tabla `productos_overrides`; si no existe, la app usará solo el almacenamiento local para las imágenes.

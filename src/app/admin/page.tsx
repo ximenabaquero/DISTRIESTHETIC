@@ -14,6 +14,8 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('');
   const [onlyDirty, setOnlyDirty] = useState(false);
+  const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
+  const [removingImageId, setRemovingImageId] = useState<number | null>(null);
 
   const rawAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'charliegil2704@gmail.com';
   const allowedAdminEmails = useMemo(() => (
@@ -57,6 +59,49 @@ export default function AdminPage() {
 
   const markDirtyAndUpdate = (id: number, field: 'precio' | 'stock', value: number | null) => {
     setProductos(prev => prev.map(p => p.id === id ? { ...p, [field]: value, dirty: true } : p));
+  };
+
+  const updateProductoImagenLocal = (id: number, imagenUrl: string | null) => {
+    setProductos(prev => prev.map(p => p.id === id ? { ...p, imagenUrl } : p));
+  };
+
+  const uploadProductoImagen = async (id: number, file: File) => {
+    setUploadingImageId(id);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/productos/${id}/imagen`, {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error || 'No se pudo actualizar la imagen');
+      }
+      updateProductoImagenLocal(id, json.producto?.imagenUrl ?? null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error inesperado subiendo la imagen';
+      alert(message);
+    } finally {
+      setUploadingImageId(null);
+    }
+  };
+
+  const removeProductoImagen = async (id: number) => {
+    setRemovingImageId(id);
+    try {
+      const res = await fetch(`/api/productos/${id}/imagen`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error || 'No se pudo eliminar la imagen');
+      }
+      updateProductoImagenLocal(id, null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error inesperado eliminando la imagen';
+      alert(message);
+    } finally {
+      setRemovingImageId(null);
+    }
   };
 
   const hasDirty = productos.some(p => p.dirty);
@@ -132,7 +177,14 @@ export default function AdminPage() {
               saving={saving}
               hasDirty={hasDirty}
             />
-            <MassEditTable productos={visibleProductos} onChange={markDirtyAndUpdate} />
+            <MassEditTable
+              productos={visibleProductos}
+              onChange={markDirtyAndUpdate}
+              onUploadImage={uploadProductoImagen}
+              onRemoveImage={removeProductoImagen}
+              uploadingImageId={uploadingImageId}
+              removingImageId={removingImageId}
+            />
           </div>
         )}
       </div>
@@ -197,7 +249,21 @@ function HeaderTools({ filter, onFilter, onlyDirty, onOnlyDirty, onSave, saving,
   );
 }
 
-function MassEditTable({ productos, onChange }: { productos: ProductoEditable[]; onChange: (id: number, field: 'precio' | 'stock', value: number | null) => void }) {
+function MassEditTable({
+  productos,
+  onChange,
+  onUploadImage,
+  onRemoveImage,
+  uploadingImageId,
+  removingImageId,
+}: {
+  productos: ProductoEditable[];
+  onChange: (id: number, field: 'precio' | 'stock', value: number | null) => void;
+  onUploadImage: (id: number, file: File) => void;
+  onRemoveImage: (id: number) => void;
+  uploadingImageId: number | null;
+  removingImageId: number | null;
+}) {
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow">
       <table className="min-w-full text-sm">
@@ -206,6 +272,7 @@ function MassEditTable({ productos, onChange }: { productos: ProductoEditable[];
             <th className="px-3 py-2 text-left">ID</th>
             <th className="px-3 py-2 text-left">Nombre</th>
             <th className="px-3 py-2">Categoría</th>
+            <th className="px-3 py-2">Imagen</th>
             <th className="px-3 py-2">Precio</th>
             <th className="px-3 py-2">Stock</th>
             <th className="px-3 py-2">Estado</th>
@@ -217,6 +284,51 @@ function MassEditTable({ productos, onChange }: { productos: ProductoEditable[];
               <td className="px-3 py-2 font-mono text-xs text-slate-800 font-semibold">{p.id}</td>
               <td className="px-3 py-2 whitespace-pre-wrap max-w-xs text-slate-900 font-medium">{p.nombre}</td>
               <td className="px-3 py-2 text-center text-slate-800">{p.categoria}</td>
+              <td className="px-3 py-2 text-center align-middle">
+                <div className="flex flex-col items-center gap-2">
+                  {p.imagenUrl ? (
+                    <Image
+                      src={p.imagenUrl}
+                      alt={p.nombre}
+                      width={64}
+                      height={64}
+                      className="h-16 w-16 rounded object-cover border"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded border flex items-center justify-center text-xs text-gray-400 bg-gray-50">
+                      Sin imagen
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700">
+                      <span>{uploadingImageId === p.id ? 'Subiendo...' : 'Cambiar'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            onUploadImage(p.id, file);
+                          }
+                          e.target.value = '';
+                        }}
+                        disabled={uploadingImageId === p.id || removingImageId === p.id}
+                      />
+                    </label>
+                    {p.imagenUrl && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveImage(p.id)}
+                        disabled={removingImageId === p.id || uploadingImageId === p.id}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                      >
+                        {removingImageId === p.id ? 'Eliminando...' : 'Quitar'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </td>
               <td className="px-3 py-2 text-center">
                 <input
                   type="number"

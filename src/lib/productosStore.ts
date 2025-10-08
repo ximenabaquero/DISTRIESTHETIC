@@ -5,9 +5,22 @@ import { productosBase, type Producto } from '@/data/productos';
 // Supabase (modo híbrido). Usamos import dinámico para no romper build si no está instalado todavía.
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-interface ProductoOverrideRow { id: number; precio: number | null; stock: number | null }
+interface ProductoOverrideRow {
+  id: number;
+  precio: number | null;
+  stock: number | null;
+  imagen_url?: string | null;
+}
+
+interface ProductoOverride {
+  id: number;
+  precio?: number | null;
+  stock?: number;
+  imagenUrl?: string | null;
+}
 
 let supabase: SupabaseClient | null = null;
+let supabaseSupportsImages: boolean | null = null;
 async function getSupabase(): Promise<SupabaseClient | null> {
   if (supabase) return supabase;
   const url = process.env.SUPABASE_URL;
@@ -22,7 +35,7 @@ const dataFile = path.join(process.cwd(), 'data', 'productos.json');
 
 interface ProductosFile {
   version: number;
-  productos: Producto[];
+  productos: ProductoOverride[];
 }
 
 async function ensureFile(): Promise<void> {
@@ -41,49 +54,52 @@ async function readFile(): Promise<ProductosFile> {
   return JSON.parse(raw) as ProductosFile;
 }
 
+function hasOwn<T extends object>(obj: T, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
 // Merge base + overrides
-function merge(base: Producto[], overrides: Producto[]): Producto[] {
+function merge(base: Producto[], overrides: ProductoOverride[]): Producto[] {
   return base.map(b => {
     const o = overrides.find(p => p.id === b.id);
-    return o ? { ...b, precio: o.precio, stock: o.stock } : b;
+    if (!o) return b;
+    return {
+      ...b,
+      precio: hasOwn(o, 'precio') ? (o.precio ?? null) : b.precio,
+      stock: hasOwn(o, 'stock') ? (o.stock ?? 0) : b.stock,
+      imagenUrl: hasOwn(o, 'imagenUrl') ? (o.imagenUrl ?? null) : b.imagenUrl,
+    };
   });
 }
 
 export async function getAllProductos(): Promise<Producto[]> {
+  let merged: Producto[] = [...productosBase];
   const sb = await getSupabase();
   if (sb) {
-    const { data, error } = await sb.from('productos_overrides').select('id, precio, stock');
-    if (error) {
-      console.error('Supabase getAllProductos error:', error.message);
-    }
-    if (data) {
-      const overrides: Producto[] = data.map((r: ProductoOverrideRow) => ({
+    const mergedFromSupabase = await fetchSupabaseOverrides(sb);
+    if (mergedFromSupabase?.length) {
+      const overrides: ProductoOverride[] = mergedFromSupabase.map((r: ProductoOverrideRow) => ({
         id: r.id,
-        nombre: '', // se rellenará desde base en merge
-        descripcion: '',
-        categoria: '',
-        disponible: true,
-        etiqueta: '',
         precio: r.precio === null ? null : Number(r.precio),
         stock: r.stock ?? 0,
+        imagenUrl: supabaseSupportsImages === false ? null : r.imagen_url ?? null,
       }));
-      // Merge manual: buscamos en productosBase por id
-      const merged = productosBase.map(b => {
-        const o = overrides.find(x => x.id === b.id);
-        return o ? { ...b, precio: o.precio, stock: o.stock } : b;
-      });
-      return merged;
+      merged = merge(merged, overrides);
     }
   }
-  // fallback archivo
+
   const file = await readFile();
-  return merge(productosBase, file.productos);
+  if (file.productos.length) {
+    merged = merge(merged, file.productos);
+  }
+
+  return merged;
 }
 
 export async function updateProducto(id: number, data: Partial<Pick<Producto, 'precio' | 'stock'>>): Promise<Producto | null> {
   const sb = await getSupabase();
   if (sb) {
-  const updatePayload: { id: number; precio?: number | null; stock?: number } = { id };
+    const updatePayload: { id: number; precio?: number | null; stock?: number } = { id };
     if (data.precio !== undefined) updatePayload.precio = data.precio;
     if (data.stock !== undefined) updatePayload.stock = data.stock;
     const { error } = await sb.from('productos_overrides').upsert(updatePayload, { onConflict: 'id' });
@@ -101,13 +117,14 @@ export async function updateProducto(id: number, data: Partial<Pick<Producto, 'p
     if (data.precio !== undefined) existing.precio = data.precio;
     if (data.stock !== undefined) existing.stock = data.stock;
   } else {
-    const base = productosBase.find(p => p.id === id);
-    if (!base) return null;
-    file.productos.push({ ...base, precio: data.precio ?? null, stock: data.stock ?? 0 });
+    const newOverride: ProductoOverride = { id };
+    if (data.precio !== undefined) newOverride.precio = data.precio;
+    if (data.stock !== undefined) newOverride.stock = data.stock;
+    file.productos.push(newOverride);
   }
   await fs.writeFile(dataFile, JSON.stringify(file, null, 2), 'utf8');
-  const merged = merge(productosBase, file.productos);
-  return merged.find(p => p.id === id) || null;
+  const allProductos = await getAllProductos();
+  return allProductos.find(p => p.id === id) || null;
 }
 
 export async function bulkUpdate(list: Array<{ id: number; precio: number | null; stock: number }>): Promise<Producto[]> {
@@ -128,12 +145,60 @@ export async function bulkUpdate(list: Array<{ id: number; precio: number | null
       ex.precio = item.precio;
       ex.stock = item.stock;
     } else {
-      const base = productosBase.find(p => p.id === item.id);
-      if (base) {
-        file.productos.push({ ...base, precio: item.precio, stock: item.stock });
-      }
+      file.productos.push({ id: item.id, precio: item.precio, stock: item.stock });
     }
   }
   await fs.writeFile(dataFile, JSON.stringify(file, null, 2), 'utf8');
-  return merge(productosBase, file.productos);
+  return getAllProductos();
+}
+
+export async function setProductoImagen(id: number, imagenUrl: string | null): Promise<Producto | null> {
+  const sb = await getSupabase();
+  if (sb && supabaseSupportsImages !== false) {
+    const { error } = await sb
+      .from('productos_overrides')
+      .upsert({ id, imagen_url: imagenUrl }, { onConflict: 'id' });
+    if (error) {
+      if (error.message?.includes('imagen_url')) {
+        supabaseSupportsImages = false;
+      } else {
+        console.error('Supabase setProductoImagen error:', error.message);
+      }
+    } else {
+      const allProductos = await getAllProductos();
+      return allProductos.find(p => p.id === id) || null;
+    }
+  }
+
+  const file = await readFile();
+  const existing = file.productos.find(p => p.id === id);
+  if (existing) {
+    existing.imagenUrl = imagenUrl ?? null;
+  } else {
+    file.productos.push({ id, imagenUrl: imagenUrl ?? null });
+  }
+  await fs.writeFile(dataFile, JSON.stringify(file, null, 2), 'utf8');
+  const allProductos = await getAllProductos();
+  return allProductos.find(p => p.id === id) || null;
+}
+
+async function fetchSupabaseOverrides(sb: SupabaseClient): Promise<ProductoOverrideRow[] | null> {
+  let { data, error } = await sb.from('productos_overrides').select('id, precio, stock, imagen_url');
+  if (error) {
+    if (error.message?.includes('imagen_url')) {
+      supabaseSupportsImages = false;
+      ({ data, error } = await sb.from('productos_overrides').select('id, precio, stock'));
+    }
+  }
+
+  if (error) {
+    console.error('Supabase getAllProductos error:', error.message);
+    return null;
+  }
+
+  if (supabaseSupportsImages === null) {
+    supabaseSupportsImages = data?.some(row => Object.prototype.hasOwnProperty.call(row, 'imagen_url')) ?? false;
+  }
+
+  return data ?? null;
 }

@@ -181,14 +181,32 @@ export default function ProductosPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {productosFiltrados.map((producto) => {
               const color = getCategoryColor(producto.categoria);
+              const icono = getProductIcon(producto.categoria);
               return (
                 <div
                   key={producto.id}
                   className={`bg-gradient-to-br from-white to-${color}-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-3 transition-all duration-300 border-l-4 border-${color}-300 group`}
                 >
+                  <div className="mb-4">
+                    {producto.imagenUrl ? (
+                      <div className="relative h-40 w-full overflow-hidden rounded-xl border border-white/60 bg-white">
+                        <Image
+                          src={producto.imagenUrl}
+                          alt={`Imagen de ${producto.nombre}`}
+                          fill
+                          className="object-cover"
+                          sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 16rem, 100vw"
+                        />
+                      </div>
+                    ) : (
+                      <div className={`flex h-40 w-full items-center justify-center rounded-xl border-2 border-dashed border-${color}-200 bg-white/50 text-sm font-semibold text-${color}-500 uppercase tracking-wide`}>
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-4xl group-hover:scale-110 transition-transform">
-                      {getProductIcon(producto.categoria)}
+                      {icono}
                     </span>
                     <span className={`bg-${color}-100 text-${color}-700 text-xs px-3 py-1 rounded-full font-bold`}>
                       {producto.etiqueta}
