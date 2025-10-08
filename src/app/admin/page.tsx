@@ -3,37 +3,28 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabaseBrowser } from '@/lib/supabaseClient';
 import { type Producto } from '@/data/productos';
 
 interface ProductoEditable extends Producto { dirty?: boolean }
 
 export default function AdminPage() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
   const [productos, setProductos] = useState<ProductoEditable[]>([]);
   // const [loadingData, setLoadingData] = useState(true); // se puede reintroducir si se muestra un spinner específico
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('');
   const [onlyDirty, setOnlyDirty] = useState(false);
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
 
-  // Cargar sesión
-  useEffect(() => {
-    const init = async () => {
-      const { data } = await supabaseBrowser.auth.getSession();
-      setSessionEmail(data.session?.user.email || null);
-      setLoadingSession(false);
-    };
-    init();
-    const { data: listener } = supabaseBrowser.auth.onAuthStateChange((_event, sess) => {
-      setSessionEmail(sess?.user?.email || null);
-    });
-    return () => { listener.subscription.unsubscribe(); };
-  }, []);
-
+  const rawAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'charliegil2704@gmail.com';
+  const allowedAdminEmails = useMemo(() => (
+    rawAdminEmails
+      .split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(Boolean)
+  ), [rawAdminEmails]);
+  const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'sarita15';
   const loggedIn = !!sessionEmail;
-  const isAdmin = loggedIn && adminEmail && sessionEmail?.toLowerCase() === adminEmail.toLowerCase();
+  const isAdmin = loggedIn && allowedAdminEmails.includes(sessionEmail?.toLowerCase() ?? '');
 
   // Cargar overrides desde API existente
   useEffect(() => {
@@ -88,13 +79,18 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogin = async (email: string) => {
-    const { error } = await supabaseBrowser.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/admin' } });
-    if (error) alert('Error enviando link: ' + error.message); else alert('Revisa tu correo para el enlace mágico.');
+  const handleLogin = async (email: string, password: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (allowedAdminEmails.includes(normalizedEmail) && password === adminPassword) {
+      setSessionEmail(email.trim());
+      alert('Login exitoso');
+    } else {
+      alert('Correo o contraseña incorrectos');
+    }
   };
 
   const handleLogout = async () => {
-    await supabaseBrowser.auth.signOut();
+    setSessionEmail(null);
   };
 
   return (
@@ -114,10 +110,9 @@ export default function AdminPage() {
       </nav>
 
       <div className="container mx-auto px-4 py-10">
-        {!loggedIn && !loadingSession && (
+        {!loggedIn && (
           <LoginPanel onLogin={handleLogin} />
         )}
-        {loadingSession && <p className="text-center text-gray-500">Verificando sesión...</p>}
         {loggedIn && !isAdmin && (
           <div className="max-w-xl mx-auto bg-white shadow p-8 rounded-xl text-center">
             <h2 className="text-2xl font-bold mb-4 text-red-600">Acceso restringido</h2>
@@ -145,14 +140,43 @@ export default function AdminPage() {
   );
 }
 
-function LoginPanel({ onLogin }: { onLogin: (email: string) => void }) {
+function LoginPanel({ onLogin }: { onLogin: (email: string, password: string) => void }) {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  const handleSubmit = () => {
+    if (!email || !password) {
+      alert('Por favor completa ambos campos.');
+      return;
+    }
+    onLogin(email, password);
+  };
+
   return (
     <div className="max-w-md mx-auto bg-white p-8 shadow rounded-xl">
       <h2 className="text-2xl font-bold mb-4 text-center">Acceso Administrador</h2>
-      <p className="text-sm text-gray-600 mb-6">Ingresa tu correo para recibir un enlace mágico de acceso.</p>
-      <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="tu@correo.com" className="w-full border px-4 py-2 rounded mb-4" />
-      <button onClick={() => onLogin(email)} disabled={!email} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded disabled:opacity-40">Enviar enlace</button>
+      <p className="text-sm text-gray-600 mb-6">Ingresa tu correo y contraseña.</p>
+      <input 
+        value={email} 
+        onChange={e => setEmail(e.target.value)} 
+        type="email" 
+        placeholder="Correo electrónico" 
+        className="w-full border px-4 py-2 rounded mb-4 text-gray-900 placeholder:text-gray-700" 
+      />
+      <input 
+        value={password} 
+        onChange={e => setPassword(e.target.value)} 
+        type="password" 
+        placeholder="Contraseña" 
+        className="w-full border px-4 py-2 rounded mb-4 text-gray-900 placeholder:text-gray-700" 
+      />
+      <button 
+        onClick={handleSubmit} 
+        disabled={!email || !password} 
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded disabled:opacity-40"
+      >
+        Iniciar sesión
+      </button>
     </div>
   );
 }
@@ -190,13 +214,13 @@ function MassEditTable({ productos, onChange }: { productos: ProductoEditable[];
         <tbody>
           {productos.map(p => (
             <tr key={p.id} className={p.dirty ? 'bg-blue-50' : ''}>
-              <td className="px-3 py-2 font-mono text-xs text-gray-500">{p.id}</td>
-              <td className="px-3 py-2 whitespace-pre-wrap max-w-xs">{p.nombre}</td>
-              <td className="px-3 py-2 text-center text-gray-600">{p.categoria}</td>
+              <td className="px-3 py-2 font-mono text-xs text-slate-800 font-semibold">{p.id}</td>
+              <td className="px-3 py-2 whitespace-pre-wrap max-w-xs text-slate-900 font-medium">{p.nombre}</td>
+              <td className="px-3 py-2 text-center text-slate-800">{p.categoria}</td>
               <td className="px-3 py-2 text-center">
                 <input
                   type="number"
-                  className="w-28 border rounded px-2 py-1 text-right"
+                  className="w-28 border rounded px-2 py-1 text-right text-slate-900 font-semibold"
                   value={p.precio ?? ''}
                   onChange={e => onChange(p.id, 'precio', e.target.value === '' ? null : Number(e.target.value))}
                 />
@@ -204,7 +228,7 @@ function MassEditTable({ productos, onChange }: { productos: ProductoEditable[];
               <td className="px-3 py-2 text-center">
                 <input
                   type="number"
-                  className="w-20 border rounded px-2 py-1 text-right"
+                  className="w-20 border rounded px-2 py-1 text-right text-slate-900 font-semibold"
                   min={0}
                   value={p.stock}
                   onChange={e => onChange(p.id, 'stock', Number(e.target.value))}
