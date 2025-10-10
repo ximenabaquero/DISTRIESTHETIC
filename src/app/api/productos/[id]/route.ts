@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { deleteProducto, updateProductoInfo, type ProductoInfoUpdate } from '@/lib/productosStore';
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const allowedCategorias = new Set(['medicamentos', 'soluciones', 'insumos', 'quimicos', 'ropa', 'proteccion']);
@@ -51,8 +51,9 @@ function sanitizeUpdatePayload(data: unknown): ProductoInfoUpdate | { error: str
   return payload;
 }
 
-export async function PUT(request: Request, context: RouteContext) {
-  const id = Number(context.params.id);
+export async function PUT(request: NextRequest, context: RouteContext) {
+  const { id: rawId } = await context.params;
+  const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ ok: false, error: 'ID inválido' }, { status: 400 });
   }
@@ -75,8 +76,9 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
-  const id = Number(context.params.id);
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { id: rawId } = await context.params;
+  const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ ok: false, error: 'ID inválido' }, { status: 400 });
   }
