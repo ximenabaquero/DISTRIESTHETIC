@@ -307,6 +307,11 @@ export default function AdminPage() {
 
         {loggedIn && isAdmin && (
           <div className="space-y-6">
+            <div className="flex flex-col gap-4">
+              <p className="w-full max-w-4xl px-4 text-lg font-semibold text-gray-700">
+                Administra el catálogo de DISTRIESTHETIC con controles intuitivos y accesibles desde este panel.
+              </p>
+            </div>
             <ContactInfoCard
               contacto={contactInfo}
               dirty={contactDirty}

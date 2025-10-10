@@ -1,60 +1,44 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SiteNav } from "@/components/SiteNav";
 
 export default function Home() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <Image
-                src="/logodistsin.png"
-                alt="DISTRIESTHETIC Logo"
-                width={200}
-                height={80}
-                className="h-16 w-auto"
-              />
-              <span className="text-2xl font-bold text-blue-600 ml-3">
-                DISTRIESTHETIC
-              </span>
-            </div>
-            <div className="flex space-x-6">
-              <Link href="/" className="text-gray-700 hover:text-blue-600">
-                Inicio
-              </Link>
-              <Link href="/productos" className="text-gray-700 hover:text-blue-600">
-                Productos
-              </Link>
-              <Link href="/contacto" className="text-gray-700 hover:text-blue-600">
-                Contacto
-              </Link>
-              <Link href="/admin" className="text-gray-700 hover:text-blue-600">
-                Panel
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-300 to-blue-500 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            {/* TODO: Replace with actual hero title */}
-            DISTRIESTHETIC
-          </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Medicamentos e insumos médicos de calidad. Todos los productos con registro INVIMA y garantía.
-            Pago contraentrega y entrega a domicilio sin costo adicional.
-          </p>
-          <Link
-            href="/productos"
-            className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-          >
-            Ver Productos
-          </Link>
+      <section className="bg-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col-reverse md:flex-row items-center gap-10">
+            <div className="w-full md:w-1/2 space-y-6 text-center md:text-left">
+              <h1 className="text-5xl font-bold text-blue-700">
+                DISTRIESTHETIC
+              </h1>
+              <p className="text-xl text-gray-700">
+                Medicamentos e insumos médicos de calidad. Todos los productos con registro INVIMA y garantía.
+                Pago contraentrega y entrega a domicilio sin costo adicional.
+              </p>
+              <div className="flex justify-center md:justify-start">
+                <Link
+                  href="/productos"
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Ver Productos
+                </Link>
+              </div>
+            </div>
+            <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+              <Image
+                src="/imagenpanelpa.PNG"
+                alt="Panel principal DISTRIESTHETIC"
+                width={700}
+                height={300}
+                priority
+                className="w-full max-w-xl"
+              />
+            </div>
+          </div>
         </div>
       </section>
 

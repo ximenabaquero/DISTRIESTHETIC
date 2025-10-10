@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { SiteNav } from "@/components/SiteNav";
 import { useState, useMemo, useEffect } from "react";
 import { type Producto } from "@/data/productos";
 
@@ -78,35 +79,7 @@ export default function ProductosPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <Image
-                src="/logodistsin.png"
-                alt="DISTRIESTHETIC Logo"
-                width={200}
-                height={80}
-                className="h-16 w-auto"
-              />
-              <span className="text-2xl font-bold text-blue-600 ml-3">
-                DISTRIESTHETIC
-              </span>
-            </div>
-            <div className="flex space-x-6">
-              <Link href="/" className="text-gray-700 hover:text-blue-600">
-                Inicio
-              </Link>
-              <Link href="/productos" className="text-blue-600 font-semibold">
-                Productos
-              </Link>
-              <Link href="/contacto" className="text-gray-700 hover:text-blue-600">
-                Contacto
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
