@@ -30,6 +30,9 @@ export default function Home() {
               <Link href="/contacto" className="text-gray-700 hover:text-blue-600">
                 Contacto
               </Link>
+              <Link href="/admin" className="text-gray-700 hover:text-blue-600">
+                Panel
+              </Link>
             </div>
           </div>
         </div>

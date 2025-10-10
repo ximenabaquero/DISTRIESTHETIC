@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { type Producto } from '@/data/productos';
+import { type Producto, productosBase } from '@/data/productos';
 
-interface ProductoEditable extends Producto { dirty?: boolean }
+interface ProductoEditable extends Producto { dirty?: boolean; isExtra?: boolean }
+
+interface ProductEditPayload {
+  nombre: string;
+  descripcion: string;
+  etiqueta: string;
+  disponible: boolean;
+}
 
 export default function AdminPage() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
@@ -19,6 +26,13 @@ export default function AdminPage() {
   const [contactInfo, setContactInfo] = useState({ telefono: '', whatsapp: '' });
   const [contactDirty, setContactDirty] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductoEditable | null>(null);
+  const [updatingProduct, setUpdatingProduct] = useState(false);
+
+  const baseProductsSet = useMemo(() => new Set(productosBase.map(p => p.id)), []);
 
   const rawAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'charliegil2704@gmail.com';
   const allowedAdminEmails = useMemo(() => (
@@ -42,7 +56,7 @@ export default function AdminPage() {
         ]);
         const productosJson = await productosRes.json();
         if (productosJson.ok) {
-          setProductos(productosJson.productos.map((p: Producto) => ({ ...p, dirty: false })));
+          setProductos(productosJson.productos.map((p: Producto) => ({ ...p, dirty: false, isExtra: !baseProductsSet.has(p.id) })));
         }
         if (contactoRes.ok) {
           const contactoJson = await contactoRes.json();
@@ -58,7 +72,7 @@ export default function AdminPage() {
       }
     };
     fetchAll();
-  }, [isAdmin]);
+  }, [isAdmin, baseProductsSet]);
 
   const visibleProductos = useMemo(() => {
     return productos.filter(p => {
@@ -75,6 +89,68 @@ export default function AdminPage() {
 
   const updateProductoImagenLocal = (id: number, imagenUrl: string | null) => {
     setProductos(prev => prev.map(p => p.id === id ? { ...p, imagenUrl } : p));
+  };
+
+  const handleCreateProducto = async (payload: Omit<Producto, 'id'>) => {
+    setCreatingProduct(true);
+    try {
+      const res = await fetch('/api/productos/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || 'No se pudo crear el producto');
+      }
+      setProductos(prev => {
+        const updated = [...prev, { ...json.producto, dirty: false, isExtra: !baseProductsSet.has(json.producto.id) }];
+        return updated.sort((a, b) => a.id - b.id);
+      });
+      setShowCreateModal(false);
+      alert(`Producto "${json.producto.nombre}" creado con éxito`);
+    } catch (error) {
+      console.error('Error creando producto', error);
+      alert(error instanceof Error ? error.message : 'Error inesperado creando producto');
+    } finally {
+      setCreatingProduct(false);
+    }
+  };
+
+  const openEditModal = (producto: ProductoEditable) => {
+    setEditingProduct(producto);
+  };
+
+  const handleUpdateProductoInfo = async (id: number, payload: ProductEditPayload) => {
+    setUpdatingProduct(true);
+    try {
+      const body = {
+        nombre: payload.nombre.trim(),
+        descripcion: payload.descripcion.trim(),
+        etiqueta: payload.etiqueta.trim().toUpperCase(),
+        disponible: payload.disponible,
+      };
+      const res = await fetch(`/api/productos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || 'No se pudo actualizar el producto');
+      }
+      setProductos(prev => {
+        const updatedList = prev.map(p => p.id === id ? { ...p, ...json.producto, dirty: false, isExtra: !baseProductsSet.has(json.producto.id) } : p);
+        return updatedList.sort((a, b) => a.id - b.id);
+      });
+      setEditingProduct(null);
+      alert(`Producto "${json.producto.nombre}" actualizado`);
+    } catch (error) {
+      console.error('Error actualizando producto', error);
+      alert(error instanceof Error ? error.message : 'Error inesperado actualizando producto');
+    } finally {
+      setUpdatingProduct(false);
+    }
   };
 
   const uploadProductoImagen = async (id: number, file: File) => {
@@ -118,6 +194,30 @@ export default function AdminPage() {
 
   const hasDirty = productos.some(p => p.dirty);
 
+  const handleDeleteProducto = async (id: number) => {
+    const productoTarget = productos.find(p => p.id === id);
+    if (!productoTarget?.isExtra) {
+      alert('Solo se pueden eliminar los productos agregados manualmente.');
+      return;
+    }
+    if (!confirm('¿Deseas eliminar este producto? Esta acción no se puede deshacer.')) return;
+    setDeletingProductId(id);
+    try {
+      const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || 'No se pudo eliminar el producto');
+      }
+      setProductos(prev => prev.filter(p => p.id !== id));
+      alert(`Producto "${json.producto.nombre}" eliminado`);
+    } catch (error) {
+      console.error('Error eliminando producto', error);
+      alert(error instanceof Error ? error.message : 'Error inesperado eliminando producto');
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
+
   const saveAll = async () => {
     if (!hasDirty) return;
     setSaving(true);
@@ -126,7 +226,7 @@ export default function AdminPage() {
       const res = await fetch('/api/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await res.json();
       if (json.ok) {
-        const updated: ProductoEditable[] = json.productos.map((p: Producto) => ({ ...p, dirty: false }));
+        const updated: ProductoEditable[] = json.productos.map((p: Producto) => ({ ...p, dirty: false, isExtra: !baseProductsSet.has(p.id) }));
         setProductos(updated);
       }
     } catch (e) {
@@ -222,20 +322,26 @@ export default function AdminPage() {
               onSave={saveAll}
               saving={saving}
               hasDirty={hasDirty}
+              onAddProduct={() => setShowCreateModal(true)}
+              hasExtras={productos.some(p => p.isExtra)}
               />
             <div className="flex justify-end gap-3">
-              <a
+              <Link
                 href="/api/productos/export"
+                prefetch={false}
                 className="inline-flex items-center rounded-md border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                target="_blank"
               >
                 Descargar CSV
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/api/productos/export/excel"
+                prefetch={false}
                 className="inline-flex items-center rounded-md border border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50"
+                target="_blank"
               >
                 Descargar Excel
-              </a>
+              </Link>
             </div>
             <MassEditTable
               productos={visibleProductos}
@@ -244,6 +350,24 @@ export default function AdminPage() {
               onRemoveImage={removeProductoImagen}
               uploadingImageId={uploadingImageId}
               removingImageId={removingImageId}
+              onDelete={handleDeleteProducto}
+              deletingId={deletingProductId}
+              onEdit={openEditModal}
+              updating={updatingProduct}
+              editingId={editingProduct?.id ?? null}
+            />
+            <CreateProductModal
+              open={showCreateModal}
+              onClose={() => !creatingProduct && setShowCreateModal(false)}
+              onCreate={handleCreateProducto}
+              loading={creatingProduct}
+            />
+            <EditProductModal
+              open={!!editingProduct}
+              product={editingProduct}
+              onClose={() => !updatingProduct && setEditingProduct(null)}
+              onSave={handleUpdateProductoInfo}
+              loading={updatingProduct}
             />
           </div>
         )}
@@ -293,7 +417,7 @@ function LoginPanel({ onLogin }: { onLogin: (email: string, password: string) =>
   );
 }
 
-function HeaderTools({ filter, onFilter, onlyDirty, onOnlyDirty, onSave, saving, hasDirty }: { filter: string; onFilter: (v: string) => void; onlyDirty: boolean; onOnlyDirty: (v: boolean) => void; onSave: () => void; saving: boolean; hasDirty: boolean; }) {
+function HeaderTools({ filter, onFilter, onlyDirty, onOnlyDirty, onSave, saving, hasDirty, onAddProduct, hasExtras }: { filter: string; onFilter: (v: string) => void; onlyDirty: boolean; onOnlyDirty: (v: boolean) => void; onSave: () => void; saving: boolean; hasDirty: boolean; onAddProduct: () => void; hasExtras: boolean; }) {
   return (
     <div className="bg-white shadow rounded-xl p-6 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
       <div className="flex items-center gap-4 w-full lg:w-auto">
@@ -303,6 +427,17 @@ function HeaderTools({ filter, onFilter, onlyDirty, onOnlyDirty, onSave, saving,
         </label>
       </div>
       <div className="flex items-center gap-3">
+        <button
+          onClick={onAddProduct}
+          className="px-4 py-2 rounded font-semibold text-sm bg-green-600 text-white hover:bg-green-700"
+        >
+          Agregar producto
+        </button>
+        {hasExtras && (
+          <span className="text-xs font-semibold text-gray-500 hidden lg:inline">
+            Puedes eliminar los productos agregados manualmente.
+          </span>
+        )}
         <button onClick={onSave} disabled={!hasDirty || saving} className={`px-4 py-2 rounded font-semibold text-sm ${!hasDirty ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : saving ? 'bg-blue-300 text-white animate-pulse' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
       </div>
     </div>
@@ -316,6 +451,11 @@ function MassEditTable({
   onRemoveImage,
   uploadingImageId,
   removingImageId,
+  onDelete,
+  deletingId,
+  onEdit,
+  updating,
+  editingId,
 }: {
   productos: ProductoEditable[];
   onChange: (id: number, field: 'precio' | 'stock', value: number | null) => void;
@@ -323,6 +463,11 @@ function MassEditTable({
   onRemoveImage: (id: number) => void;
   uploadingImageId: number | null;
   removingImageId: number | null;
+  onDelete: (id: number) => void;
+  deletingId: number | null;
+  onEdit: (producto: ProductoEditable) => void;
+  updating: boolean;
+  editingId: number | null;
 }) {
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow">
@@ -336,6 +481,7 @@ function MassEditTable({
             <th className="px-3 py-2">Precio</th>
             <th className="px-3 py-2">Stock</th>
             <th className="px-3 py-2">Estado</th>
+            <th className="px-3 py-2">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -409,6 +555,30 @@ function MassEditTable({
               <td className="px-3 py-2 text-center">
                 {p.dirty ? <span className="text-xs font-semibold text-blue-600">MODIFICADO</span> : <span className="text-xs text-gray-400">—</span>}
               </td>
+              <td className="px-3 py-2">
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(p)}
+                    disabled={updating || deletingId === p.id}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-60"
+                  >
+                    {updating && editingId === p.id ? 'Actualizando...' : 'Editar'}
+                  </button>
+                  {p.isExtra ? (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(p.id)}
+                      disabled={deletingId === p.id || updating}
+                      className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-60"
+                    >
+                      {deletingId === p.id ? 'Eliminando...' : 'Eliminar'}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -469,5 +639,279 @@ function ContactInfoCard({
         </button>
       </div>
     </section>
+  );
+}
+
+const categoriaOptions = [
+  { value: 'medicamentos', label: 'Medicamentos' },
+  { value: 'soluciones', label: 'Soluciones' },
+  { value: 'insumos', label: 'Insumos' },
+  { value: 'quimicos', label: 'Químicos' },
+  { value: 'ropa', label: 'Ropa' },
+  { value: 'proteccion', label: 'Protección' },
+];
+
+function CreateProductModal({ open, onClose, onCreate, loading }: { open: boolean; onClose: () => void; onCreate: (data: Omit<Producto, 'id'>) => void; loading: boolean; }) {
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [categoria, setCategoria] = useState('medicamentos');
+  const [etiqueta, setEtiqueta] = useState('');
+  const [disponible, setDisponible] = useState(true);
+  const [precio, setPrecio] = useState('');
+  const [stock, setStock] = useState('0');
+
+  useEffect(() => {
+    if (open) {
+      setNombre('');
+      setDescripcion('');
+      setCategoria('medicamentos');
+      setEtiqueta('');
+      setDisponible(true);
+      setPrecio('');
+      setStock('0');
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: Omit<Producto, 'id'> = {
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      categoria,
+      etiqueta: etiqueta.trim().toUpperCase(),
+      disponible,
+      precio: precio === '' ? null : Number(precio),
+      stock: stock === '' ? 0 : Number(stock),
+      imagenUrl: null,
+    };
+    onCreate(payload);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <h3 className="text-lg font-semibold text-gray-900">Agregar nuevo producto</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+            disabled={loading}
+          >
+            ✕
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Nombre*</span>
+              <input
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Etiqueta*</span>
+              <input
+                value={etiqueta}
+                onChange={e => setEtiqueta(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2 md:col-span-2">
+              <span className="text-sm font-medium text-gray-700">Descripción*</span>
+              <textarea
+                value={descripcion}
+                onChange={e => setDescripcion(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Categoría*</span>
+              <select
+                value={categoria}
+                onChange={e => setCategoria(e.target.value)}
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                {categoriaOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Disponible</span>
+              <select
+                value={disponible ? 'true' : 'false'}
+                onChange={e => setDisponible(e.target.value === 'true')}
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Precio (COP)</span>
+              <input
+                type="number"
+                min={0}
+                value={precio}
+                onChange={e => setPrecio(e.target.value)}
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Stock</span>
+              <input
+                type="number"
+                min={0}
+                value={stock}
+                onChange={e => setStock(e.target.value)}
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={`rounded-md px-4 py-2 text-sm font-semibold text-white ${loading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+              disabled={loading}
+            >
+              {loading ? 'Creando...' : 'Crear producto'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditProductModal({ open, product, onClose, onSave, loading }: { open: boolean; product: ProductoEditable | null; onClose: () => void; onSave: (id: number, data: ProductEditPayload) => void; loading: boolean; }) {
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [etiqueta, setEtiqueta] = useState('');
+  const [disponible, setDisponible] = useState(true);
+
+  useEffect(() => {
+    if (open && product) {
+      setNombre(product.nombre ?? '');
+      setDescripcion(product.descripcion ?? '');
+      setEtiqueta(product.etiqueta ?? '');
+      setDisponible(product.disponible);
+    }
+  }, [open, product]);
+
+  if (!open || !product) return null;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSave(product.id, {
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      etiqueta: etiqueta.trim(),
+      disponible,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Editar producto</h3>
+            <p className="text-xs text-gray-500">ID #{product.id} • {product.isExtra ? 'Producto agregado manualmente' : 'Producto del catálogo base'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+            disabled={loading}
+          >
+            ✕
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 md:col-span-2">
+              <span className="text-sm font-medium text-gray-700">Nombre*</span>
+              <input
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2 md:col-span-2">
+              <span className="text-sm font-medium text-gray-700">Descripción*</span>
+              <textarea
+                value={descripcion}
+                onChange={e => setDescripcion(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Etiqueta*</span>
+              <input
+                value={etiqueta}
+                onChange={e => setEtiqueta(e.target.value.toUpperCase())}
+                required
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Disponible</span>
+              <select
+                value={disponible ? 'true' : 'false'}
+                onChange={e => setDisponible(e.target.value === 'true')}
+                className="rounded-md border px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="true">Sí</option>
+                <option value="false">No</option>
+              </select>
+            </label>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-gray-700">Categoría</span>
+              <span className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-600 bg-gray-50">
+                {product.categoria}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={`rounded-md px-4 py-2 text-sm font-semibold text-white ${loading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
+              disabled={loading}
+            >
+              {loading ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

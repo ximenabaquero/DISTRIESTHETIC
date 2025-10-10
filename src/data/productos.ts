@@ -61,3 +61,14 @@ export const productosBase: Producto[] = [
   { id: 36, nombre: "Guantes de látex", descripcion: "caja completa", categoria: "proteccion", disponible: true, etiqueta: "LÁTEX", precio: null, stock: 0, imagenUrl: null },
   { id: 37, nombre: "Campo estéril 1x1", descripcion: "1x1 metro", categoria: "proteccion", disponible: true, etiqueta: "1x1", precio: null, stock: 0, imagenUrl: null },
 ];
+
+// helper para obtener el siguiente id
+const obtenerSiguienteId = () =>
+  productosBase.reduce((maxId, producto) => Math.max(maxId, producto.id), 0) + 1;
+
+// utilidad para agregar productos
+export const agregarProducto = (producto: Omit<Producto, "id">): Producto => {
+  const nuevoProducto: Producto = { id: obtenerSiguienteId(), ...producto };
+  productosBase.push(nuevoProducto);
+  return nuevoProducto;
+};

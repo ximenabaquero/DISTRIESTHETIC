@@ -1,9 +1,11 @@
 {
-  "version": 1,
-  "productos": [
+  "version": 3,
+  "overrides": [
     {
       "id": 1,
       "imagenUrl": null
     }
-  ]
+  ],
+  "extras": [],
+  "lastId": 38
 }
