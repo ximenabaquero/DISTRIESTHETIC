@@ -16,6 +16,9 @@ export default function AdminPage() {
   const [onlyDirty, setOnlyDirty] = useState(false);
   const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
   const [removingImageId, setRemovingImageId] = useState<number | null>(null);
+  const [contactInfo, setContactInfo] = useState({ telefono: '', whatsapp: '' });
+  const [contactDirty, setContactDirty] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
 
   const rawAdminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'charliegil2704@gmail.com';
   const allowedAdminEmails = useMemo(() => (
@@ -33,16 +36,25 @@ export default function AdminPage() {
     if (!isAdmin) return;
     const fetchAll = async () => {
       try {
-        const res = await fetch('/api/productos');
-        const json = await res.json();
-        if (json.ok) {
-          const merged: ProductoEditable[] = json.productos.map((p: Producto) => ({ ...p, dirty: false }));
-          setProductos(merged);
+        const [productosRes, contactoRes] = await Promise.all([
+          fetch('/api/productos'),
+          fetch('/api/contacto-info'),
+        ]);
+        const productosJson = await productosRes.json();
+        if (productosJson.ok) {
+          setProductos(productosJson.productos.map((p: Producto) => ({ ...p, dirty: false })));
         }
-      } catch (e) {
-        console.error('Error cargando productos', e);
-      } finally {
-        // setLoadingData(false);
+        if (contactoRes.ok) {
+          const contactoJson = await contactoRes.json();
+          setContactInfo({
+            telefono: contactoJson?.contact?.telefono ?? '',
+            whatsapp: contactoJson?.contact?.whatsapp ?? '',
+          });
+          setContactDirty(false);
+        }
+      } catch (error) {
+        console.error('Error cargando datos admin', error);
+        alert('Error cargando datos del administrador');
       }
     };
     fetchAll();
@@ -138,6 +150,33 @@ export default function AdminPage() {
     setSessionEmail(null);
   };
 
+  const handleContactField = (field: 'telefono' | 'whatsapp', value: string) => {
+    setContactInfo(prev => ({ ...prev, [field]: value }));
+    setContactDirty(true);
+  };
+
+  const saveContactInfo = async () => {
+    if (!contactDirty) return;
+    setSavingContact(true);
+    try {
+      const res = await fetch('/api/contacto-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactInfo),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo guardar');
+      setContactInfo(json.contact);
+      setContactDirty(false);
+      alert('Información de contacto actualizada');
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Error guardando contacto');
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       <nav className="bg-white shadow">
@@ -167,7 +206,14 @@ export default function AdminPage() {
         )}
 
         {loggedIn && isAdmin && (
-          <div>
+          <div className="space-y-6">
+            <ContactInfoCard
+              contacto={contactInfo}
+              dirty={contactDirty}
+              saving={savingContact}
+              onFieldChange={handleContactField}
+              onSave={saveContactInfo}
+            />
             <HeaderTools
               filter={filter}
               onFilter={setFilter}
@@ -176,7 +222,21 @@ export default function AdminPage() {
               onSave={saveAll}
               saving={saving}
               hasDirty={hasDirty}
-            />
+              />
+            <div className="flex justify-end gap-3">
+              <a
+                href="/api/productos/export"
+                className="inline-flex items-center rounded-md border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+              >
+                Descargar CSV
+              </a>
+              <a
+                href="/api/productos/export/excel"
+                className="inline-flex items-center rounded-md border border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50"
+              >
+                Descargar Excel
+              </a>
+            </div>
             <MassEditTable
               productos={visibleProductos}
               onChange={markDirtyAndUpdate}
@@ -357,5 +417,57 @@ function MassEditTable({
         <div className="text-center text-gray-500 py-10">Sin productos</div>
       )}
     </div>
+  );
+}
+
+function ContactInfoCard({
+  contacto,
+  dirty,
+  saving,
+  onFieldChange,
+  onSave,
+}: {
+  contacto: { telefono: string; whatsapp: string };
+  dirty: boolean;
+  saving: boolean;
+  onFieldChange: (field: 'telefono' | 'whatsapp', value: string) => void;
+  onSave: () => void;
+}) {
+  return (
+    <section className="bg-white shadow rounded-xl p-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        Información de contacto público
+      </h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="flex flex-col space-y-2">
+          <span className="text-sm font-medium text-gray-700">Teléfono</span>
+          <input
+            value={contacto.telefono}
+            onChange={e => onFieldChange('telefono', e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="304 683 1493"
+          />
+        </label>
+        <label className="flex flex-col space-y-2">
+          <span className="text-sm font-medium text-gray-700">WhatsApp (con indicativo)</span>
+          <input
+            value={contacto.whatsapp}
+            onChange={e => onFieldChange('whatsapp', e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="573046831493"
+          />
+        </label>
+      </div>
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!dirty || saving}
+          className="rounded-md bg-blue-600 px-4 py-2 text-white font-semibold disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </button>
+      </div>
+    </section>
   );
 }
