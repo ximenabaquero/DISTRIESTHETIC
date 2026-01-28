@@ -3,7 +3,9 @@
   "overrides": [
     {
       "id": 1,
-      "imagenUrl": null
+      "imagenUrl": null,
+      "precio": 57890,
+      "stock": 6789
     }
   ],
   "extras": [],
