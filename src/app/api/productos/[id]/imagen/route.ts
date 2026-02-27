@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { deleteLocalProductImage, saveProductImageToLocal } from '@/lib/productImageStorage';
 import { getAllProductos, setProductoImagen } from '@/lib/productosStore';
+import { requireAdmin } from '@/lib/adminAuth';
 
 type RouteParams = { params: Promise<{ id: string }> } | { params: { id: string } };
 
@@ -20,6 +21,9 @@ function parseProductId(raw: string): number | null {
 }
 
 export async function POST(request: Request, context: RouteParams) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   const productId = await resolveProductId(context);
   if (!productId) {
     return NextResponse.json({ ok: false, error: 'ID inválido' }, { status: 400 });
@@ -59,6 +63,9 @@ export async function POST(request: Request, context: RouteParams) {
 }
 
 export async function DELETE(_request: Request, context: RouteParams) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   const productId = await resolveProductId(context);
   if (!productId) {
     return NextResponse.json({ ok: false, error: 'ID inválido' }, { status: 400 });

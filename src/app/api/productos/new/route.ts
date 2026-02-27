@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createProducto } from '@/lib/productosStore';
 import type { Producto } from '@/data/productos';
+import { requireAdmin } from '@/lib/adminAuth';
 
 type ProductoPayload = Omit<Producto, 'id'>;
 
@@ -58,6 +59,9 @@ function sanitizePayload(data: unknown): ProductoPayload | { error: string } {
 }
 
 export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const sanitized = sanitizePayload(body);

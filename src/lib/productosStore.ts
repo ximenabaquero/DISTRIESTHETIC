@@ -1,31 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { productosBase, type Producto } from '@/data/productos';
-import { deleteLocalProductImage } from './productImageStorage';
-
-// Supabase (modo híbrido). Usamos import dinámico para no romper build si no está instalado todavía.
 import type { SupabaseClient } from '@supabase/supabase-js';
-
-interface ProductoOverrideRow {
-  id: number;
-  precio: number | null;
-  stock: number | null;
-  imagen_url?: string | null;
-}
-
-interface ProductoOverride {
-  id: number;
-  precio?: number | null;
-  stock?: number;
-  imagenUrl?: string | null;
-  nombre?: string;
-  descripcion?: string;
-  categoria?: Producto['categoria'];
-  etiqueta?: string;
-  disponible?: boolean;
-}
-
-type ProductoExtra = Producto;
 
 export type ProductoInfoUpdate = {
   nombre?: string | null;
@@ -35,401 +9,237 @@ export type ProductoInfoUpdate = {
   disponible?: boolean | null;
 };
 
-interface ProductosFileV3 {
-  version: 3;
-  overrides: ProductoOverride[];
-  extras: ProductoExtra[];
-  lastId: number;
-}
-
-type ProductosFile = ProductosFileV3;
-
-const baseMaxId = productosBase.reduce((max, p) => Math.max(max, p.id), 0);
-
+// ──────────────────────────────────────────────────────────────
+// Supabase client (server-side, service role)
+// ──────────────────────────────────────────────────────────────
 let supabase: SupabaseClient | null = null;
-let supabaseSupportsImages: boolean | null = null;
+let seeded = false;
+
 async function getSupabase(): Promise<SupabaseClient | null> {
   if (supabase) return supabase;
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY; // service role para operaciones de escritura seguras en el servidor.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   const { createClient } = await import('@supabase/supabase-js');
   supabase = createClient(url, key, { auth: { persistSession: false } });
   return supabase;
 }
 
-const dataFile = path.join(process.cwd(), 'data', 'productos.json');
-
-function createEmptyFile(): ProductosFile {
+// ──────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────
+function mapRow(row: Record<string, unknown>): Producto {
   return {
-    version: 3,
-    overrides: [],
-    extras: [],
-    lastId: baseMaxId,
+    id: Number(row.id),
+    nombre: String(row.nombre),
+    descripcion: String(row.descripcion ?? ''),
+    categoria: String(row.categoria) as Producto['categoria'],
+    disponible: Boolean(row.disponible),
+    etiqueta: String(row.etiqueta ?? ''),
+    precio: row.precio !== null && row.precio !== undefined ? Number(row.precio) : null,
+    stock: Number(row.stock) || 0,
+    imagenUrl: typeof row.imagen_url === 'string' ? row.imagen_url : null,
   };
 }
 
-async function ensureFile(): Promise<void> {
-  try {
-    await fs.access(dataFile);
-  } catch {
-    await fs.mkdir(path.dirname(dataFile), { recursive: true });
-    await fs.writeFile(dataFile, JSON.stringify(createEmptyFile(), null, 2), 'utf8');
-  }
-}
+/**
+ * Siembra los 37 productos base si la tabla está vacía.
+ * Usa upsert para que sea idempotente en caso de ejecución repetida.
+ */
+async function ensureSeeded(sb: SupabaseClient): Promise<void> {
+  if (seeded) return;
 
-function migrateFile(data: unknown): ProductosFile {
-  if (!data || typeof data !== 'object') return createEmptyFile();
-  const record = data as Record<string, unknown>;
-  const version = Number(record.version ?? 1);
+  const { count, error } = await sb
+    .from('productos')
+    .select('*', { count: 'exact', head: true });
 
-  if (version >= 3) {
-    const overrides = Array.isArray(record.overrides) ? (record.overrides as ProductoOverride[]) : [];
-    const extras = Array.isArray(record.extras) ? (record.extras as ProductoExtra[]) : [];
-    const lastIdRaw = typeof record.lastId === 'number' ? record.lastId : baseMaxId;
-    const lastExtraId = extras.reduce((max, p) => Math.max(max, p.id), baseMaxId);
-    return {
-      version: 3,
-      overrides,
-      extras,
-      lastId: Math.max(lastIdRaw, lastExtraId, baseMaxId),
-    };
+  if (error) {
+    console.error('[productosStore] Error verificando semilla:', error.message);
+    return;
   }
 
-  if (version === 2) {
-    const overrides = Array.isArray(record.overrides) ? (record.overrides as ProductoOverride[]) : [];
-    const extras = Array.isArray(record.extras) ? (record.extras as ProductoExtra[]) : [];
-    const lastIdRaw = typeof record.lastId === 'number' ? record.lastId : baseMaxId;
-    const lastExtraId = extras.reduce((max, p) => Math.max(max, p.id), baseMaxId);
-    return {
-      version: 3,
-      overrides,
-      extras,
-      lastId: Math.max(lastIdRaw, lastExtraId, baseMaxId),
-    };
+  if (count !== null && count > 0) {
+    seeded = true;
+    return;
   }
 
-  const legacyOverrides = Array.isArray((record as { productos?: ProductoOverride[] }).productos)
-    ? ((record as { productos?: ProductoOverride[] }).productos ?? [])
-    : [];
+  const rows = productosBase.map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    descripcion: p.descripcion,
+    categoria: p.categoria,
+    disponible: p.disponible,
+    etiqueta: p.etiqueta,
+    precio: p.precio,
+    stock: p.stock,
+    imagen_url: p.imagenUrl,
+    is_base: true,
+  }));
 
-  return {
-    version: 3,
-    overrides: legacyOverrides,
-    extras: [],
-    lastId: baseMaxId,
-  };
-}
+  const { error: insertError } = await sb
+    .from('productos')
+    .upsert(rows, { onConflict: 'id' });
 
-async function readFile(): Promise<ProductosFile> {
-  await ensureFile();
-  try {
-    const raw = await fs.readFile(dataFile, 'utf8');
-    const parsed = JSON.parse(raw);
-    const migrated = migrateFile(parsed);
-    if (migrated.version !== (parsed?.version ?? 1)) {
-      await writeFile(migrated);
-    }
-    return migrated;
-  } catch (error) {
-    console.warn('[productosStore] Archivo inválido, recreando productos.json', error);
-    const empty = createEmptyFile();
-    await writeFile(empty);
-    return empty;
+  if (insertError) {
+    console.error('[productosStore] Error sembrando productos base:', insertError.message);
   }
+
+  seeded = true;
 }
 
-async function writeFile(data: ProductosFile): Promise<void> {
-  await fs.writeFile(dataFile, JSON.stringify({ ...data, version: 3 }, null, 2), 'utf8');
-}
-
-function hasOwn<T extends object>(obj: T, key: PropertyKey): boolean {
-  return Object.prototype.hasOwnProperty.call(obj, key);
-}
-
-// Merge base + overrides
-function merge(base: Producto[], overrides: ProductoOverride[]): Producto[] {
-  return base.map(b => {
-    const o = overrides.find(p => p.id === b.id);
-    if (!o) return b;
-    return {
-      ...b,
-      nombre: hasOwn(o, 'nombre') ? (o.nombre ?? b.nombre) : b.nombre,
-      descripcion: hasOwn(o, 'descripcion') ? (o.descripcion ?? b.descripcion) : b.descripcion,
-      categoria: hasOwn(o, 'categoria') ? (o.categoria ?? b.categoria) : b.categoria,
-      etiqueta: hasOwn(o, 'etiqueta') ? (o.etiqueta ?? b.etiqueta) : b.etiqueta,
-      disponible: hasOwn(o, 'disponible') ? (o.disponible ?? b.disponible) : b.disponible,
-      precio: hasOwn(o, 'precio') ? (o.precio ?? null) : b.precio,
-      stock: hasOwn(o, 'stock') ? (o.stock ?? 0) : b.stock,
-      imagenUrl: hasOwn(o, 'imagenUrl') ? (o.imagenUrl ?? null) : b.imagenUrl,
-    };
-  });
-}
+// ──────────────────────────────────────────────────────────────
+// API pública
+// ──────────────────────────────────────────────────────────────
 
 export async function getAllProductos(): Promise<Producto[]> {
-  let merged: Producto[] = [...productosBase];
   const sb = await getSupabase();
-  if (sb) {
-    const mergedFromSupabase = await fetchSupabaseOverrides(sb);
-    if (mergedFromSupabase?.length) {
-      const overrides: ProductoOverride[] = mergedFromSupabase.map((r: ProductoOverrideRow) => ({
-        id: r.id,
-        precio: r.precio === null ? null : Number(r.precio),
-        stock: r.stock ?? 0,
-        imagenUrl: supabaseSupportsImages === false ? null : r.imagen_url ?? null,
-      }));
-      merged = merge(merged, overrides);
-    }
-    
+  if (!sb) return [...productosBase];
+
+  await ensureSeeded(sb);
+
+  const { data, error } = await sb
+    .from('productos')
+    .select('*')
+    .order('id', { ascending: true });
+
+  if (error || !data) {
+    console.error('[productosStore] Error obteniendo productos:', error?.message);
+    return [...productosBase];
   }
 
-  const file = await readFile();
-  if (file.overrides.length) {
-    merged = merge(merged, file.overrides);
-  }
-
-  if (file.extras.length) {
-    merged = [...merged, ...file.extras.map(extra => ({ ...extra }))];
-  }
-
-  return merged.sort((a, b) => a.id - b.id);
+  return data.map((row) => mapRow(row as Record<string, unknown>));
 }
 
-export async function updateProducto(id: number, data: Partial<Pick<Producto, 'precio' | 'stock'>>): Promise<Producto | null> {
+export async function bulkUpdate(
+  list: Array<{ id: number; precio: number | null; stock: number }>,
+): Promise<Producto[]> {
   const sb = await getSupabase();
-  const isBaseProduct = productosBase.some(p => p.id === id);
-  if (sb && isBaseProduct) {
-    const updatePayload: { id: number; precio?: number | null; stock?: number } = { id };
-    if (data.precio !== undefined) updatePayload.precio = data.precio;
-    if (data.stock !== undefined) updatePayload.stock = data.stock;
-    const { error } = await sb.from('productos_overrides').upsert(updatePayload, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase updateProducto error:', error.message);
-    } else {
-      const all = await getAllProductos();
-      return all.find(p => p.id === id) || null;
-    }
-  }
-  // fallback archivo
-  const file = await readFile();
-  if (isBaseProduct) {
-    const existing = file.overrides.find(p => p.id === id);
-    if (existing) {
-      if (data.precio !== undefined) existing.precio = data.precio;
-      if (data.stock !== undefined) existing.stock = data.stock;
-    } else {
-      const newOverride: ProductoOverride = { id };
-      if (data.precio !== undefined) newOverride.precio = data.precio;
-      if (data.stock !== undefined) newOverride.stock = data.stock;
-      file.overrides.push(newOverride);
-    }
-  } else {
-    const extra = file.extras.find(p => p.id === id);
-    if (extra) {
-      if (data.precio !== undefined) extra.precio = data.precio ?? null;
-      if (data.stock !== undefined) extra.stock = data.stock ?? 0;
-    }
-  }
-  await writeFile(file);
-  const allProductos = await getAllProductos();
-  return allProductos.find(p => p.id === id) || null;
-}
+  if (!sb) throw new Error('Supabase no configurado.');
 
-export async function bulkUpdate(list: Array<{ id: number; precio: number | null; stock: number }>): Promise<Producto[]> {
-  const sb = await getSupabase();
-  const baseIds = new Set(productosBase.map(p => p.id));
-  const payloadForSupabase = list.filter(item => baseIds.has(item.id));
-  if (sb && payloadForSupabase.length) {
-    const payload = payloadForSupabase.map(i => ({ id: i.id, precio: i.precio, stock: i.stock }));
-    const { error } = await sb.from('productos_overrides').upsert(payload, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase bulkUpdate error:', error.message);
-    }
-  }
+  await Promise.all(
+    list.map((item) =>
+      sb
+        .from('productos')
+        .update({ precio: item.precio, stock: item.stock })
+        .eq('id', item.id),
+    ),
+  );
 
-  const file = await readFile();
-  for (const item of list) {
-    if (baseIds.has(item.id)) {
-      const ex = file.overrides.find(p => p.id === item.id);
-      if (ex) {
-        ex.precio = item.precio;
-        ex.stock = item.stock;
-      } else {
-        file.overrides.push({ id: item.id, precio: item.precio, stock: item.stock });
-      }
-      continue;
-    }
-    const extra = file.extras.find(p => p.id === item.id);
-    if (extra) {
-      extra.precio = item.precio;
-      extra.stock = item.stock;
-    }
-  }
-  await writeFile(file);
   return getAllProductos();
 }
 
-
-export async function setProductoImagen(id: number, imagenUrl: string | null): Promise<Producto | null> {
-  const sb = await getSupabase();
-  const isBaseProduct = productosBase.some(p => p.id === id);
-  if (sb && supabaseSupportsImages !== false && isBaseProduct) {
-    const { error } = await sb
-      .from('productos_overrides')
-      .upsert({ id, imagen_url: imagenUrl }, { onConflict: 'id' });
-    if (error) {
-      if (error.message?.includes('imagen_url')) {
-        supabaseSupportsImages = false;
-      } else {
-        console.error('Supabase setProductoImagen error:', error.message);
-      }
-    } else {
-      const allProductos = await getAllProductos();
-      return allProductos.find(p => p.id === id) || null;
-    }
-  }
-
-  const file = await readFile();
-  if (isBaseProduct) {
-    const existing = file.overrides.find(p => p.id === id);
-    if (existing) {
-      existing.imagenUrl = imagenUrl ?? null;
-    } else {
-      file.overrides.push({ id, imagenUrl: imagenUrl ?? null });
-    }
-  } else {
-    const extra = file.extras.find(p => p.id === id);
-    if (extra) {
-      extra.imagenUrl = imagenUrl ?? null;
-    }
-  }
-  await writeFile(file);
-  const allProductos = await getAllProductos();
-  return allProductos.find(p => p.id === id) || null;
-}
-
-async function fetchSupabaseOverrides(sb: SupabaseClient): Promise<ProductoOverrideRow[] | null> {
-  let { data, error } = await sb.from('productos_overrides').select('id, precio, stock, imagen_url');
-  if (error) {
-    if (error.message?.includes('imagen_url')) {
-      supabaseSupportsImages = false;
-      ({ data, error } = await sb.from('productos_overrides').select('id, precio, stock'));
-    }
-  }
-
-  if (error) {
-    console.error('Supabase getAllProductos error:', error.message);
-    return null;
-  }
-
-  if (supabaseSupportsImages === null) {
-    supabaseSupportsImages = data?.some(row => Object.prototype.hasOwnProperty.call(row, 'imagen_url')) ?? false;
-  }
-
-  return data ?? null;
-}
-
 export async function createProducto(data: Omit<Producto, 'id'>): Promise<Producto> {
-  const file = await readFile();
-  const nextId = Math.max(
-    file.lastId ?? baseMaxId,
-    ...file.extras.map(p => p.id),
-    baseMaxId,
-  ) + 1;
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
 
-  const nuevoProducto: Producto = {
-    ...data,
-    id: nextId,
-  };
+  const { data: inserted, error } = await sb
+    .from('productos')
+    .insert({
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      categoria: data.categoria,
+      disponible: data.disponible,
+      etiqueta: data.etiqueta,
+      precio: data.precio,
+      stock: data.stock,
+      imagen_url: data.imagenUrl,
+      is_base: false,
+    })
+    .select()
+    .single();
 
-  file.extras.push(nuevoProducto);
-  file.lastId = nextId;
-  await writeFile(file);
-
-  return nuevoProducto;
-}
-
-export async function updateProductoInfo(id: number, data: ProductoInfoUpdate): Promise<Producto | null> {
-  const file = await readFile();
-  const isBaseProduct = productosBase.some(p => p.id === id);
-
-  if (isBaseProduct) {
-    let existing = file.overrides.find(p => p.id === id);
-    if (!existing) {
-      existing = { id };
-      file.overrides.push(existing);
-    }
-
-    if (data.nombre !== undefined) {
-      if (data.nombre === null) {
-        delete existing.nombre;
-      } else {
-        existing.nombre = data.nombre;
-      }
-    }
-    if (data.descripcion !== undefined) {
-      if (data.descripcion === null) {
-        delete existing.descripcion;
-      } else {
-        existing.descripcion = data.descripcion;
-      }
-    }
-    if (data.categoria !== undefined) {
-      if (data.categoria === null) {
-        delete existing.categoria;
-      } else {
-        existing.categoria = data.categoria;
-      }
-    }
-    if (data.etiqueta !== undefined) {
-      if (data.etiqueta === null) {
-        delete existing.etiqueta;
-      } else {
-        existing.etiqueta = data.etiqueta;
-      }
-    }
-    if (data.disponible !== undefined) {
-      if (data.disponible === null) {
-        delete existing.disponible;
-      } else {
-        existing.disponible = data.disponible;
-      }
-    }
-  } else {
-    const extra = file.extras.find(p => p.id === id);
-    if (!extra) return null;
-    if (data.nombre !== undefined && data.nombre !== null) {
-      extra.nombre = data.nombre;
-    }
-    if (data.descripcion !== undefined && data.descripcion !== null) {
-      extra.descripcion = data.descripcion;
-    }
-    if (data.categoria !== undefined && data.categoria !== null) {
-      extra.categoria = data.categoria;
-    }
-    if (data.etiqueta !== undefined && data.etiqueta !== null) {
-      extra.etiqueta = data.etiqueta;
-    }
-    if (data.disponible !== undefined && data.disponible !== null) {
-      extra.disponible = data.disponible;
-    }
+  if (error || !inserted) {
+    throw new Error(error?.message || 'Error creando producto.');
   }
 
-  await writeFile(file);
-  const allProductos = await getAllProductos();
-  return allProductos.find(p => p.id === id) || null;
+  return mapRow(inserted as Record<string, unknown>);
+}
+
+export async function updateProductoInfo(
+  id: number,
+  data: ProductoInfoUpdate,
+): Promise<Producto | null> {
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
+
+  const updates: Record<string, unknown> = {};
+  if (data.nombre !== undefined && data.nombre !== null) updates.nombre = data.nombre;
+  if (data.descripcion !== undefined && data.descripcion !== null) updates.descripcion = data.descripcion;
+  if (data.categoria !== undefined && data.categoria !== null) updates.categoria = data.categoria;
+  if (data.etiqueta !== undefined && data.etiqueta !== null) updates.etiqueta = data.etiqueta;
+  if (data.disponible !== undefined && data.disponible !== null) updates.disponible = data.disponible;
+
+  if (Object.keys(updates).length === 0) return null;
+
+  const { data: updated, error } = await sb
+    .from('productos')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !updated) return null;
+  return mapRow(updated as Record<string, unknown>);
+}
+
+export async function setProductoImagen(
+  id: number,
+  imagenUrl: string | null,
+): Promise<Producto | null> {
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
+
+  const { data: updated, error } = await sb
+    .from('productos')
+    .update({ imagen_url: imagenUrl })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !updated) return null;
+  return mapRow(updated as Record<string, unknown>);
 }
 
 export async function deleteProducto(id: number): Promise<Producto | null> {
-  const file = await readFile();
-  const index = file.extras.findIndex(p => p.id === id);
-  if (index === -1) {
-    return null;
-  }
-  const [removed] = file.extras.splice(index, 1);
-  await writeFile(file);
-  if (removed?.imagenUrl) {
-    await deleteLocalProductImage(removed.imagenUrl);
-  }
-  return removed;
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
+
+  const { data: current, error: fetchError } = await sb
+    .from('productos')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !current) return null;
+
+  // Solo se pueden eliminar productos extras (is_base = false)
+  if ((current as Record<string, unknown>).is_base) return null;
+
+  const { error } = await sb.from('productos').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+
+  return mapRow(current as Record<string, unknown>);
+}
+
+// Alias conservado por compatibilidad con updateProducto individual
+export async function updateProducto(
+  id: number,
+  data: Partial<Pick<Producto, 'precio' | 'stock'>>,
+): Promise<Producto | null> {
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
+
+  const updates: Record<string, unknown> = {};
+  if (data.precio !== undefined) updates.precio = data.precio;
+  if (data.stock !== undefined) updates.stock = data.stock;
+
+  const { data: updated, error } = await sb
+    .from('productos')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !updated) return null;
+  return mapRow(updated as Record<string, unknown>);
 }

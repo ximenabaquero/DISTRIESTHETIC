@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllProductos, bulkUpdate } from '@/lib/productosStore';
+import { requireAdmin } from '@/lib/adminAuth';
 
 // GET /api/productos -> lista completa
 export async function GET() {
@@ -14,6 +15,9 @@ export async function GET() {
 
 // POST /api/productos -> bulk update [{id, precio, stock}]
 export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   try {
     const body = await req.json();
     if (!Array.isArray(body)) {

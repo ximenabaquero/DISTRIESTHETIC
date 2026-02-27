@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -15,24 +15,11 @@ const navLinks = [
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const close = () => setOpen(false);
 
   return (
-    <nav
-      className={`sticky top-0 z-30 transition-all duration-300 bg-white border-b ${
-        scrolled
-          ? "border-gray-200 shadow-md"
-          : "border-gray-100 shadow-sm"
-      }`}
-    >
+    <nav className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-md">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
 
@@ -100,9 +87,7 @@ export function SiteNav() {
 
         {/* Mobile menu */}
         {open && (
-          <div className={`md:hidden border-t py-3 pb-4 ${
-            scrolled ? "border-gray-100 bg-white" : "border-white/10 bg-white/95 backdrop-blur-md"
-          }`}>
+          <div className="md:hidden border-t border-gray-100 bg-white py-3 pb-4">
             <div className="flex flex-col gap-1">
               {navLinks.map(link => {
                 const isActive = pathname === link.href;

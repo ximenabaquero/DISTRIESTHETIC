@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteProducto, updateProductoInfo, type ProductoInfoUpdate } from '@/lib/productosStore';
+import { requireAdmin } from '@/lib/adminAuth';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -52,6 +53,9 @@ function sanitizeUpdatePayload(data: unknown): ProductoInfoUpdate | { error: str
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   const { id: rawId } = await context.params;
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) {
@@ -77,6 +81,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
+  }
   const { id: rawId } = await context.params;
   const id = Number(rawId);
   if (!Number.isInteger(id) || id <= 0) {

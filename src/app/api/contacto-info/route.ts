@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getContactInfo, updateContactInfo } from "@/lib/contactInfoStore";
+import { requireAdmin } from "@/lib/adminAuth";
 
 export async function GET() {
   try {
@@ -12,6 +13,9 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: "No autorizado." }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const telefono = (body?.telefono ?? "").toString().trim();
