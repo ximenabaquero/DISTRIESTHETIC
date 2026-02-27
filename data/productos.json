@@ -6,6 +6,11 @@
       "imagenUrl": null,
       "precio": 57890,
       "stock": 6789
+    },
+    {
+      "id": 2,
+      "precio": 50000,
+      "stock": 0
     }
   ],
   "extras": [],
