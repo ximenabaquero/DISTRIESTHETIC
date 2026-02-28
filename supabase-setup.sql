@@ -41,23 +41,42 @@ VALUES (1, '304 683 1493', '573046831493')
 ON CONFLICT (id) DO NOTHING;
 
 -- ──────────────────────────────────────────────────────────────
--- 3. Row Level Security
+-- 3. Tabla mensajes_contacto (formulario de contacto)
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS mensajes_contacto (
+  id         SERIAL      PRIMARY KEY,
+  nombre     TEXT        NOT NULL,
+  email      TEXT        NOT NULL,
+  telefono   TEXT        NULL,
+  mensaje    TEXT        NOT NULL,
+  leido      BOOLEAN     NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ──────────────────────────────────────────────────────────────
+-- 4. Row Level Security
 -- ──────────────────────────────────────────────────────────────
 -- Las escrituras siempre van por rutas server-side con service_role
 -- (bypass RLS). La clave anon sólo necesita leer.
 
-ALTER TABLE productos    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE contact_info ENABLE ROW LEVEL SECURITY;
+ALTER TABLE productos         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_info      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mensajes_contacto ENABLE ROW LEVEL SECURITY;
 
--- Lectura pública (catálogo visible para todos)
+-- Lectura pública (catálogo y contacto visibles para todos)
 CREATE POLICY "productos_select_public"
   ON productos FOR SELECT USING (true);
 
 CREATE POLICY "contact_info_select_public"
   ON contact_info FOR SELECT USING (true);
 
+-- Inserción pública (visitantes pueden enviar formulario de contacto)
+-- Las lecturas/borrados de mensajes van por service_role (admin server-side)
+CREATE POLICY "mensajes_insert_public"
+  ON mensajes_contacto FOR INSERT WITH CHECK (true);
+
 -- ──────────────────────────────────────────────────────────────
--- 4. Storage bucket product-images
+-- 5. Storage bucket product-images
 -- ──────────────────────────────────────────────────────────────
 -- Ejecutar desde el panel Storage de Supabase o con este SQL:
 INSERT INTO storage.buckets (id, name, public)

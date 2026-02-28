@@ -5,6 +5,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { ProductCard } from "@/components/ProductCard";
 import { useState, useMemo, useEffect } from "react";
 import { type Producto } from "@/data/productos";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 // ── Category icons (SVG) ──────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export default function ProductosPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const { whatsapp } = useContactInfo();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -274,7 +276,9 @@ export default function ProductosPage() {
             </p>
           </div>
           <a
-            href="https://wa.me/573246614270"
+            href={`https://wa.me/${whatsapp}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-shrink-0 inline-flex items-center gap-2.5 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors duration-200 text-sm shadow-sm"
           >
             <WhatsAppIcon />

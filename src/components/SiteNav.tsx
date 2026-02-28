@@ -45,7 +45,6 @@ export function SiteNav() {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(link => {
               const isActive = pathname === link.href;
-              const isAdmin = link.href === "/admin";
               return (
                 <Link
                   key={link.href}
@@ -53,8 +52,6 @@ export function SiteNav() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-200"
-                      : isAdmin
-                      ? "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
