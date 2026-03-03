@@ -1,0 +1,24 @@
+[33m6136a44[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m cambiosql footer
+[33m21cc2e3[m cambios supabase unificado
+[33m59249c6[m feat: update SiteNav component for improved styling and functionality; rename "Productos" to "Catálogo", add scroll effect feat: add Footer component for site-wide footer with navigation links feat: create ProductCard component for displaying product details with dynamic styling feat: implement WhatsAppButton component for product inquiries with dynamic message generation
+[33mb96c0b4[m Subir todos los cambios recientes al git
+[33mf0e229e[m ncy
+[33m78ad1c6[m correción error vercel
+[33m70c3688[m tralalelotralala
+[33m468d839[m jivjv
+[33m13f32ed[m fghjkl
+[33m5a3747e[m supa
+[33m6c40851[m admin configuration
+[33m8295029[m feat(admin): página /admin con login por magic link y edición masiva; remover clave distri2025 del catálogo
+[33m0541eb5[m feat(productos): añadir botón Guardar ahora para persistir cambios inmediatos
+[33m8081837[m chore: agregar ruta /api/health/supabase para ver estado de conexión
+[33m4b3f330[m feat(supabase): soporte híbrido archivo/Supabase para precios y stock
+[33m7d25089[m feat(api): persistencia real de precios y stock via /api/productos con guardado debounce
+[33mdcc6c37[m feat: agregar gestión de precios y stock con modo admin local en página de productos
+[33m1e8bc47[m Fix TypeScript errors in productos page - ready for Vercel deployment
+[33m4ae81e5[m productos sin precios
+[33m282fa77[m Merge pull request #1 from ximenabaquero/copilot/fix-d7d06e49-1865-47be-b18b-d934f0198941
+[33m219f4c0[m[33m ([m[1;31morigin/copilot/fix-d7d06e49-1865-47be-b18b-d934f0198941[m[33m)[m Complete DISTRIESTHETIC website implementation with all features
+[33m2653189[m Initial Next.js 14 + TypeScript + Tailwind setup
+[33ma257c58[m Initial plan
+[33m51f77d0[m Initial commit

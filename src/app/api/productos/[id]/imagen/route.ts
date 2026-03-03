@@ -43,7 +43,7 @@ export async function POST(request: Request, context: RouteParams) {
   }
 
   try {
-    const { url } = await saveProductImageToLocal(file, productId);
+    const url = await saveProductImageToLocal(file, productId);
     const updated = await setProductoImagen(productId, url);
 
     if (!updated) {

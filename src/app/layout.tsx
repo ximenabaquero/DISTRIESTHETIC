@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
   title: "DISTRIESTHETIC - Distribución de Productos Estéticos",
@@ -19,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="antialiased font-sans">
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

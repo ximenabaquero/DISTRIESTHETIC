@@ -196,7 +196,10 @@ export async function setProductoImagen(
     .select()
     .single();
 
-  if (error || !updated) return null;
+  if (error || !updated) {
+    console.error('[productosStore] Error actualizando imagen:', error?.message, { id, imagenUrl });
+    return null;
+  }
   return mapRow(updated as Record<string, unknown>);
 }
 
