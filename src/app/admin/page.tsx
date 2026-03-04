@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAdmin } from './components/hooks/useAdmin';
 import AdminLayout from './components/AdminLayout';
 import LoginPanel from './components/LoginPanel';
@@ -8,9 +9,45 @@ import HeaderTools from './components/HeaderTools';
 import MassEditTable from './components/MassEditTable';
 import CreateProductModal from './components/CreateProductModal';
 import EditProductModal from './components/EditProductModal';
+import DashboardView from './components/DashboardView';
+import PedidosView from './components/PedidosView';
 import Link from 'next/link';
 
+type Section = 'dashboard' | 'productos' | 'pedidos';
+
+const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'productos',
+    label: 'Productos',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'pedidos',
+    label: 'Pedidos',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+  },
+];
+
 export default function AdminPage() {
+  const [section, setSection] = useState<Section>('dashboard');
+
   const {
     sessionEmail,
     productos,
@@ -27,6 +64,9 @@ export default function AdminPage() {
     deletingProductId,
     editingProduct,
     updatingProduct,
+    pedidos,
+    loadingPedidos,
+    updatingPedidoId,
     visibleProductos,
     hasDirty,
     loggedIn,
@@ -42,6 +82,7 @@ export default function AdminPage() {
     uploadProductoImagen,
     removeProductoImagen,
     handleDeleteProducto,
+    handleUpdatePedidoEstado,
     saveAll,
     handleLogin,
     handleLogout,
@@ -51,9 +92,8 @@ export default function AdminPage() {
 
   return (
     <AdminLayout loggedIn={loggedIn} onLogout={handleLogout} sessionEmail={sessionEmail}>
-      {!loggedIn && (
-        <LoginPanel onLogin={handleLogin} />
-      )}
+      {!loggedIn && <LoginPanel onLogin={handleLogin} />}
+
       {loggedIn && !isAdmin && (
         <div className="max-w-xl mx-auto bg-white shadow p-8 rounded-xl text-center">
           <h2 className="text-2xl font-bold mb-4 text-red-600">Acceso restringido</h2>
@@ -64,73 +104,115 @@ export default function AdminPage() {
 
       {loggedIn && isAdmin && (
         <div className="space-y-6">
-          <div className="flex flex-col gap-4">
-            <p className="w-full max-w-4xl px-4 text-lg font-semibold text-gray-700">
-              Administra el catálogo de DISTRIESTHETIC con controles intuitivos y accesibles desde este panel.
-            </p>
-          </div>
-          <ContactInfoCard
-            contacto={contactInfo}
-            dirty={contactDirty}
-            saving={savingContact}
-            onFieldChange={handleContactField}
-            onSave={saveContactInfo}
-          />
-          <HeaderTools
-            filter={filter}
-            onFilter={setFilter}
-            onlyDirty={onlyDirty}
-            onOnlyDirty={setOnlyDirty}
-            onSave={saveAll}
-            saving={saving}
-            hasDirty={hasDirty}
-            onAddProduct={() => setShowCreateModal(true)}
-            hasExtras={productos.some((p) => p.isExtra)}
+          {/* Navegación por tabs */}
+          <nav className="flex gap-1 border-b border-gray-200">
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setSection(item.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  section === item.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {item.icon}
+                {item.label}
+                {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'pendiente').length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
+                    {pedidos.filter(p => p.estado === 'pendiente').length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Dashboard */}
+          {section === 'dashboard' && (
+            <DashboardView
+              productos={productos}
+              pedidos={pedidos}
+              loadingPedidos={loadingPedidos}
             />
-          <div className="flex justify-end gap-3">
-            <Link
-              href="/api/productos/export"
-              prefetch={false}
-              className="inline-flex items-center rounded-md border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
-              target="_blank"
-            >
-              Descargar CSV
-            </Link>
-            <Link
-              href="/api/productos/export/excel"
-              prefetch={false}
-              className="inline-flex items-center rounded-md border border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50"
-              target="_blank"
-            >
-              Descargar Excel
-            </Link>
-          </div>
-          <MassEditTable
-            productos={visibleProductos}
-            onChange={markDirtyAndUpdate}
-            onUploadImage={uploadProductoImagen}
-            onRemoveImage={removeProductoImagen}
-            uploadingImageId={uploadingImageId}
-            removingImageId={removingImageId}
-            onDelete={handleDeleteProducto}
-            deletingId={deletingProductId}
-            onEdit={openEditModal}
-            updating={updatingProduct}
-            editingId={editingProduct?.id ?? null}
-          />
-          <CreateProductModal
-            open={showCreateModal}
-            onClose={() => !creatingProduct && setShowCreateModal(false)}
-            onCreate={handleCreateProducto}
-            loading={creatingProduct}
-          />
-          <EditProductModal
-            open={!!editingProduct}
-            product={editingProduct}
-            onClose={() => !updatingProduct && setEditingProduct(null)}
-            onSave={handleUpdateProductoInfo}
-            loading={updatingProduct}
-          />
+          )}
+
+          {/* Productos */}
+          {section === 'productos' && (
+            <div className="space-y-6">
+              <ContactInfoCard
+                contacto={contactInfo}
+                dirty={contactDirty}
+                saving={savingContact}
+                onFieldChange={handleContactField}
+                onSave={saveContactInfo}
+              />
+              <HeaderTools
+                filter={filter}
+                onFilter={setFilter}
+                onlyDirty={onlyDirty}
+                onOnlyDirty={setOnlyDirty}
+                onSave={saveAll}
+                saving={saving}
+                hasDirty={hasDirty}
+                onAddProduct={() => setShowCreateModal(true)}
+                hasExtras={productos.some((p) => p.isExtra)}
+              />
+              <div className="flex justify-end gap-3">
+                <Link
+                  href="/api/productos/export"
+                  prefetch={false}
+                  className="inline-flex items-center rounded-md border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                  target="_blank"
+                >
+                  Descargar CSV
+                </Link>
+                <Link
+                  href="/api/productos/export/excel"
+                  prefetch={false}
+                  className="inline-flex items-center rounded-md border border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50"
+                  target="_blank"
+                >
+                  Descargar Excel
+                </Link>
+              </div>
+              <MassEditTable
+                productos={visibleProductos}
+                onChange={markDirtyAndUpdate}
+                onUploadImage={uploadProductoImagen}
+                onRemoveImage={removeProductoImagen}
+                uploadingImageId={uploadingImageId}
+                removingImageId={removingImageId}
+                onDelete={handleDeleteProducto}
+                deletingId={deletingProductId}
+                onEdit={openEditModal}
+                updating={updatingProduct}
+                editingId={editingProduct?.id ?? null}
+              />
+              <CreateProductModal
+                open={showCreateModal}
+                onClose={() => !creatingProduct && setShowCreateModal(false)}
+                onCreate={handleCreateProducto}
+                loading={creatingProduct}
+              />
+              <EditProductModal
+                open={!!editingProduct}
+                product={editingProduct}
+                onClose={() => !updatingProduct && setEditingProduct(null)}
+                onSave={handleUpdateProductoInfo}
+                loading={updatingProduct}
+              />
+            </div>
+          )}
+
+          {/* Pedidos */}
+          {section === 'pedidos' && (
+            <PedidosView
+              pedidos={pedidos}
+              loading={loadingPedidos}
+              onUpdateEstado={handleUpdatePedidoEstado}
+              updatingId={updatingPedidoId}
+            />
+          )}
         </div>
       )}
     </AdminLayout>

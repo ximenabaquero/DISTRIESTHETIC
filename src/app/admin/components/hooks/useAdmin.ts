@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { type Producto, productosBase } from '@/data/productos';
+import type { Pedido, PedidoEstado } from '@/lib/pedidosStore';
 
 interface ProductoEditable extends Producto { dirty?: boolean; isExtra?: boolean }
 interface ProductEditPayload {
@@ -25,6 +26,9 @@ export function useAdmin() {
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
   const [editingProduct, setEditingProduct] = useState<ProductoEditable | null>(null);
   const [updatingProduct, setUpdatingProduct] = useState(false);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [loadingPedidos, setLoadingPedidos] = useState(false);
+  const [updatingPedidoId, setUpdatingPedidoId] = useState<number | null>(null);
 
   const baseProductsSet = useMemo(() => new Set(productosBase.map(p => p.id)), []);
 
@@ -85,7 +89,20 @@ export function useAdmin() {
         alert('Error cargando datos del administrador');
       }
     };
+    const fetchPedidos = async () => {
+      setLoadingPedidos(true);
+      try {
+        const res = await fetch('/api/pedidos');
+        const json = await res.json();
+        if (json.ok) setPedidos(json.pedidos);
+      } catch (error) {
+        console.error('Error cargando pedidos', error);
+      } finally {
+        setLoadingPedidos(false);
+      }
+    };
     fetchAll();
+    fetchPedidos();
   }, [isAdmin, baseProductsSet]);
 
   const visibleProductos = useMemo(() => {
@@ -256,6 +273,24 @@ export function useAdmin() {
     }
   }, [hasDirty, productos, baseProductsSet]);
 
+  const handleUpdatePedidoEstado = useCallback(async (id: number, estado: PedidoEstado) => {
+    setUpdatingPedidoId(id);
+    try {
+      const res = await fetch(`/api/pedidos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo actualizar el estado');
+      setPedidos(prev => prev.map(p => p.id === id ? json.pedido : p));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error actualizando pedido');
+    } finally {
+      setUpdatingPedidoId(null);
+    }
+  }, []);
+
   // ──────────────────────────────────────────────────────────────
   // Auth: login y logout via API (cookie HTTP-only)
   // ──────────────────────────────────────────────────────────────
@@ -332,6 +367,9 @@ export function useAdmin() {
     deletingProductId,
     editingProduct,
     updatingProduct,
+    pedidos,
+    loadingPedidos,
+    updatingPedidoId,
     visibleProductos,
     hasDirty,
     loggedIn,
@@ -349,6 +387,7 @@ export function useAdmin() {
     uploadProductoImagen,
     removeProductoImagen,
     handleDeleteProducto,
+    handleUpdatePedidoEstado,
     saveAll,
     handleLogin,
     handleLogout,

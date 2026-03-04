@@ -224,6 +224,31 @@ export async function deleteProducto(id: number): Promise<Producto | null> {
   return mapRow(current as Record<string, unknown>);
 }
 
+export async function decrementarStock(
+  items: Array<{ id: number; cantidad: number }>,
+): Promise<void> {
+  const sb = await getSupabase();
+  if (!sb) throw new Error('Supabase no configurado.');
+
+  // Obtener stocks actuales de los productos involucrados
+  const ids = items.map(i => i.id);
+  const { data, error } = await sb.from('productos').select('id, stock').in('id', ids);
+  if (error || !data) {
+    console.error('[productosStore] Error obteniendo stock para decrementar:', error?.message);
+    return;
+  }
+
+  const stockMap = new Map(data.map(r => [Number(r.id), Number(r.stock)]));
+
+  await Promise.all(
+    items.map(item => {
+      const current = stockMap.get(item.id) ?? 0;
+      const newStock = Math.max(0, current - item.cantidad);
+      return sb.from('productos').update({ stock: newStock }).eq('id', item.id);
+    }),
+  );
+}
+
 // Alias conservado por compatibilidad con updateProducto individual
 export async function updateProducto(
   id: number,
