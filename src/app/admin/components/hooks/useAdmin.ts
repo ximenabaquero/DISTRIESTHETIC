@@ -15,6 +15,7 @@ export function useAdmin() {
   const [productos, setProductos] = useState<ProductoEditable[]>([]);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [onlyDirty, setOnlyDirty] = useState(false);
   const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
   const [removingImageId, setRemovingImageId] = useState<number | null>(null);
@@ -105,9 +106,15 @@ export function useAdmin() {
     fetchPedidos();
   }, [isAdmin, baseProductsSet]);
 
+  const categories = useMemo(
+    () => Array.from(new Set(productos.map(p => p.categoria))).sort(),
+    [productos],
+  );
+
   const visibleProductos = useMemo(() => {
     return productos.filter(p => {
       if (onlyDirty && !p.dirty) return false;
+      if (categoryFilter && p.categoria !== categoryFilter) return false;
       if (!filter) return true;
       const f = filter.toLowerCase();
       return (
@@ -116,7 +123,7 @@ export function useAdmin() {
         p.categoria.toLowerCase().includes(f)
       );
     });
-  }, [productos, filter, onlyDirty]);
+  }, [productos, filter, categoryFilter, onlyDirty]);
 
   const markDirtyAndUpdate = useCallback((id: number, field: 'precio' | 'stock', value: number | null) => {
     setProductos(prev => prev.map(p => p.id === id ? { ...p, [field]: value, dirty: true } : p));
@@ -356,6 +363,8 @@ export function useAdmin() {
     productos,
     saving,
     filter,
+    categoryFilter,
+    categories,
     onlyDirty,
     uploadingImageId,
     removingImageId,
@@ -376,6 +385,7 @@ export function useAdmin() {
     isAdmin,
     // Setters
     setFilter,
+    setCategoryFilter,
     setOnlyDirty,
     setShowCreateModal,
     setEditingProduct,

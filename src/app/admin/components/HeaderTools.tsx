@@ -3,6 +3,9 @@
 interface HeaderToolsProps {
   filter: string;
   onFilter: (v: string) => void;
+  categoryFilter: string;
+  onCategoryFilter: (v: string) => void;
+  categories: string[];
   onlyDirty: boolean;
   onOnlyDirty: (v: boolean) => void;
   onSave: () => void;
@@ -13,8 +16,8 @@ interface HeaderToolsProps {
 }
 
 export default function HeaderTools({
-  filter, onFilter, onlyDirty, onOnlyDirty,
-  onSave, saving, hasDirty, onAddProduct, hasExtras,
+  filter, onFilter, categoryFilter, onCategoryFilter, categories,
+  onlyDirty, onOnlyDirty, onSave, saving, hasDirty, onAddProduct, hasExtras,
 }: HeaderToolsProps) {
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-4 mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
@@ -37,6 +40,18 @@ export default function HeaderTools({
             className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:bg-white transition-all duration-200"
           />
         </div>
+
+        {/* Category filter */}
+        <select
+          value={categoryFilter}
+          onChange={e => onCategoryFilter(e.target.value)}
+          className="py-2.5 px-3 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:bg-white transition-all duration-200"
+        >
+          <option value="">Todas las categorías</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
 
         {/* Checkbox toggle */}
         <label className="flex items-center gap-2.5 cursor-pointer select-none group">
