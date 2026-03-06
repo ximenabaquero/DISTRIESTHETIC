@@ -31,6 +31,15 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
   const [filterMetodo, setFilterMetodo] = useState<'todos' | PedidoMetodo>('todos');
   const [filterEstado, setFilterEstado] = useState<'todos' | PedidoEstado>('todos');
   const [rangoFecha, setRangoFecha] = useState<RangoFecha>('todo');
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (id: number) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const visible = useMemo(() => {
     const now = new Date();
@@ -48,6 +57,13 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
       return true;
     });
   }, [pedidos, filterMetodo, filterEstado, rangoFecha]);
+
+  const kpis = useMemo(() => {
+    const totalPeriodo = visible.reduce((s, p) => s + p.total, 0);
+    const ingresosPagados = visible.filter(p => p.estado === 'pagado').reduce((s, p) => s + p.total, 0);
+    const pendientes = visible.filter(p => p.estado === 'pendiente').length;
+    return { totalPeriodo, ingresosPagados, pendientes };
+  }, [visible]);
 
   return (
     <div className="space-y-4">
@@ -94,8 +110,6 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
           </select>
         </div>
 
-        <span className="text-xs text-gray-400">{visible.length} pedido{visible.length !== 1 ? 's' : ''}</span>
-
         {/* Exportar */}
         <div className="ml-auto flex gap-2">
           <Link
@@ -123,6 +137,27 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
         </div>
       </div>
 
+      {/* KPIs */}
+      {!loading && visible.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Total del período</p>
+            <p className="text-lg font-bold text-gray-800">{fmt(kpis.totalPeriodo)}</p>
+            <p className="text-xs text-gray-400">{visible.length} pedido{visible.length !== 1 ? 's' : ''}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3">
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Ingresos confirmados</p>
+            <p className="text-lg font-bold text-green-700">{fmt(kpis.ingresosPagados)}</p>
+            <p className="text-xs text-gray-400">{visible.filter(p => p.estado === 'pagado').length} pagado{visible.filter(p => p.estado === 'pagado').length !== 1 ? 's' : ''}</p>
+          </div>
+          <div className={`rounded-xl border shadow-sm px-4 py-3 ${kpis.pendientes > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-100'}`}>
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Pendientes de cobro</p>
+            <p className={`text-lg font-bold ${kpis.pendientes > 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{kpis.pendientes}</p>
+            <p className="text-xs text-gray-400">{kpis.pendientes > 0 ? 'Requieren atención' : 'Todo al día'}</p>
+          </div>
+        </div>
+      )}
+
       {/* Tabla */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
@@ -148,21 +183,36 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
               <tbody className="divide-y divide-gray-50">
                 {visible.map(p => {
                   const isBusy = updatingId === p.id;
+                  const isExpanded = expandedRows.has(p.id);
+                  const isPendiente = p.estado === 'pendiente';
+                  const itemsToShow = isExpanded ? p.items : p.items.slice(0, 2);
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={p.id}
+                      className={`transition-colors ${
+                        isPendiente
+                          ? 'bg-yellow-50 border-l-4 border-yellow-400 hover:bg-yellow-100'
+                          : 'border-l-4 border-transparent hover:bg-gray-50'
+                      }`}
+                    >
                       <td className="px-4 py-3 font-mono text-xs text-gray-500">#{p.id}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                         {new Date(p.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
                       <td className="px-4 py-3 max-w-xs">
                         <div className="space-y-0.5">
-                          {p.items.slice(0, 2).map((item, i) => (
+                          {itemsToShow.map((item, i) => (
                             <p key={i} className="text-xs text-gray-700 truncate">
                               {item.nombre} <span className="text-gray-400">x{item.cantidad}</span>
                             </p>
                           ))}
                           {p.items.length > 2 && (
-                            <p className="text-xs text-gray-400">+{p.items.length - 2} más</p>
+                            <button
+                              onClick={() => toggleExpanded(p.id)}
+                              className="text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors mt-0.5"
+                            >
+                              {isExpanded ? '▲ Ver menos' : `+${p.items.length - 2} más`}
+                            </button>
                           )}
                         </div>
                       </td>
