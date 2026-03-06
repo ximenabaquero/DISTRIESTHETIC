@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { CartToastNotification } from "@/components/CartToastNotification";
 
 export const metadata: Metadata = {
   title: "DISTRIESTHETIC - Distribución de Productos Estéticos",
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <CartProvider>
           {children}
+          <CartToastNotification />
         </CartProvider>
       </body>
     </html>

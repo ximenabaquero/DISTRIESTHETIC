@@ -6,6 +6,7 @@ import Image from "next/image";
 import { SiteNav } from "@/components/SiteNav";
 import { useCart } from "@/context/CartContext";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -37,6 +38,7 @@ export default function CarritoPage() {
   const [wompiLoading, setWompiLoading] = useState(false);
   const [whatsappLoading, setWhatsappLoading] = useState(false);
   const [pedidoConfirmado, setPedidoConfirmado] = useState<number | null>(null);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const handleEnviarWhatsApp = async () => {
     if (whatsappLoading) return;
@@ -326,7 +328,7 @@ export default function CarritoPage() {
 
               {/* Vaciar carrito */}
               <button
-                onClick={clearCart}
+                onClick={() => setConfirmClearOpen(true)}
                 className="w-full py-2.5 text-sm font-medium text-gray-500 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-xl transition-colors"
               >
                 Vaciar carrito
@@ -335,6 +337,17 @@ export default function CarritoPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmClearOpen}
+        variant="danger"
+        title="¿Vaciar el carrito?"
+        message="Se eliminarán todos los productos. Esta acción no se puede deshacer."
+        confirmLabel="Sí, vaciar"
+        cancelLabel="Cancelar"
+        onConfirm={() => { clearCart(); setConfirmClearOpen(false); }}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </div>
   );
 }

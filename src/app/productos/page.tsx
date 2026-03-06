@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { Suspense, useMemo, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SiteNav } from "@/components/SiteNav";
 import { ProductCard } from "@/components/ProductCard";
-import { useState, useMemo, useEffect } from "react";
 import { type Producto } from "@/data/productos";
 import { useContactInfo } from "@/hooks/useContactInfo";
 
@@ -13,51 +13,58 @@ const categoryConfig: Record<string, { label: string; icon: React.ReactNode; col
   medicamentos: {
     label: "Medicamentos",
     color: "blue",
+    // HeartIcon — salud / farmacia
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 6.375 10.5 10.5 10.5 10.5S21 14.625 21 8.25Z" />
       </svg>
     ),
   },
   soluciones: {
     label: "Soluciones",
-    color: "sky",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-      </svg>
-    ),
-  },
-  insumos: {
-    label: "Insumos",
-    color: "cyan",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-      </svg>
-    ),
-  },
-  quimicos: {
-    label: "Químicos",
-    color: "blue",
+    color: "teal",
+    // BeakerIcon — líquido / soluciones IV / suero
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
       </svg>
     ),
   },
-  ropa: {
-    label: "Ropa",
-    color: "sky",
+  insumos: {
+    label: "Insumos",
+    color: "violet",
+    // PlusCircleIcon — cruz médica universal
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+      </svg>
+    ),
+  },
+  quimicos: {
+    label: "Químicos",
+    color: "amber",
+    // SparklesIcon — reacciones / moléculas
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+      </svg>
+    ),
+  },
+  ropa: {
+    label: "Ropa",
+    color: "rose",
+    // TagIcon — etiqueta de prenda
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L9.568 3Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
       </svg>
     ),
   },
   proteccion: {
     label: "Protección",
-    color: "cyan",
+    color: "green",
+    // ShieldCheckIcon — EPP / protección (se mantiene)
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
@@ -74,12 +81,35 @@ const WhatsAppIcon = () => (
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function ProductosPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+function ProductosContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const searchTerm = searchParams.get("q") ?? "";
+  const selectedCategory = searchParams.get("cat") ?? "";
+  const sortBy = searchParams.get("sort") ?? "";
+
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const { whatsapp } = useContactInfo();
+
+  function setSearchTerm(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("q", value); else params.delete("q");
+    router.replace(`/productos?${params.toString()}`, { scroll: false });
+  }
+
+  function setSelectedCategory(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("cat", value); else params.delete("cat");
+    router.replace(`/productos?${params.toString()}`, { scroll: false });
+  }
+
+  function setSortBy(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("sort", value); else params.delete("sort");
+    router.replace(`/productos?${params.toString()}`, { scroll: false });
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,14 +133,29 @@ export default function ProductosPage() {
   }));
 
   const productosFiltrados = useMemo(() => {
-    return data.filter((p) => {
+    const filtered = data.filter((p) => {
       const matchesSearch =
         p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = !selectedCategory || p.categoria === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedCategory, data]);
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "precio-asc":
+          return (a.precio ?? Infinity) - (b.precio ?? Infinity);
+        case "precio-desc":
+          return (b.precio ?? -Infinity) - (a.precio ?? -Infinity);
+        case "nombre":
+          return a.nombre.localeCompare(b.nombre, "es");
+        case "disponibles":
+          return (b.stock > 0 ? 1 : 0) - (a.stock > 0 ? 1 : 0);
+        default:
+          return 0;
+      }
+    });
+  }, [searchTerm, selectedCategory, sortBy, data]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -123,22 +168,11 @@ export default function ProductosPage() {
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-2">
             DISTRIESTHETIC
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Catálogo de Productos</h1>
-              <p className="text-gray-500 mt-1">
-                Insumos médicos con registro INVIMA y garantía de calidad
-              </p>
-            </div>
-            <Link
-              href="/admin"
-              className="text-sm text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
-            >
-              Panel de administración
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Catálogo de Productos</h1>
+            <p className="text-gray-500 mt-1">
+              Insumos médicos con registro INVIMA y garantía de calidad
+            </p>
           </div>
         </div>
 
@@ -206,6 +240,24 @@ export default function ProductosPage() {
             ))}
           </div>
 
+          {/* Sort */}
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-400 flex-shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+            </svg>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="text-sm text-gray-600 bg-transparent border-none outline-none cursor-pointer hover:text-gray-900 transition-colors"
+            >
+              <option value="">Ordenar: relevancia</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+              <option value="nombre">Nombre A–Z</option>
+              <option value="disponibles">Disponibles primero</option>
+            </select>
+          </div>
+
           {/* Result count */}
           {(searchTerm || selectedCategory) && (
             <p className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
@@ -221,12 +273,21 @@ export default function ProductosPage() {
 
         {/* Products grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 text-sm gap-2">
-            <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-            Cargando productos...
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+                <div className="h-40 bg-gray-100 rounded-xl mb-4" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl" />
+                  <div className="w-16 h-5 bg-gray-100 rounded-full" />
+                </div>
+                <div className="h-5 bg-gray-100 rounded-lg mb-2 w-3/4" />
+                <div className="h-4 bg-gray-100 rounded-lg mb-4 w-full" />
+                <div className="h-4 bg-gray-100 rounded-lg mb-4 w-1/2" />
+                <div className="h-9 bg-gray-100 rounded-xl mb-3" />
+                <div className="h-5 bg-gray-100 rounded-lg w-2/3" />
+              </div>
+            ))}
           </div>
         ) : productosFiltrados.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -287,5 +348,20 @@ export default function ProductosPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <svg className="w-5 h-5 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+      </div>
+    }>
+      <ProductosContent />
+    </Suspense>
   );
 }

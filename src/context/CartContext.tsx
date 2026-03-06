@@ -1,11 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { type Producto } from "@/data/productos";
 
 export interface CartItem {
   producto: Producto;
   cantidad: number;
+}
+
+export interface CartToast {
+  nombre: string;
+  imagenUrl: string | null;
 }
 
 interface CartContextType {
@@ -16,6 +21,8 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   itemCount: number;
+  /** Último producto agregado. Se limpia automáticamente después de 2.5s. */
+  cartToast: CartToast | null;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -23,6 +30,8 @@ const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [cartToast, setCartToast] = useState<CartToast | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     try {
@@ -48,6 +57,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { producto, cantidad: 1 }];
     });
+
+    // Mostrar toast
+    setCartToast({ nombre: producto.nombre, imagenUrl: producto.imagenUrl ?? null });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setCartToast(null), 2500);
   };
 
   const removeItem = (id: number) => {
@@ -75,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, itemCount }}
+      value={{ items, addItem, removeItem, updateQuantity, clearCart, total, itemCount, cartToast }}
     >
       {children}
     </CartContext.Provider>
