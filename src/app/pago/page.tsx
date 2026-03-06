@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
@@ -14,7 +14,7 @@ interface TxData {
   amountInCents: number;
 }
 
-export default function PagoPage() {
+function PagoContent() {
   const searchParams = useSearchParams();
   const transactionId = searchParams.get("id");
   const { items, clearCart } = useCart();
@@ -174,5 +174,13 @@ export default function PagoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PagoPage() {
+  return (
+    <Suspense>
+      <PagoContent />
+    </Suspense>
   );
 }
