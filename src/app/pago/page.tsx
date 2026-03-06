@@ -17,7 +17,7 @@ interface TxData {
 export default function PagoPage() {
   const searchParams = useSearchParams();
   const transactionId = searchParams.get("id");
-  const { items, total, clearCart } = useCart();
+  const { items, clearCart } = useCart();
 
   const [loading, setLoading] = useState(true);
   const [tx, setTx] = useState<TxData | null>(null);
@@ -57,7 +57,7 @@ export default function PagoPage() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [transactionId, clearCart]);
+  }, [transactionId, clearCart, items]);
 
   const fmt = (cents: number) =>
     new Intl.NumberFormat("es-CO", {

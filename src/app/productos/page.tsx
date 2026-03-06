@@ -213,7 +213,7 @@ export default function ProductosPage() {
                 ? "Sin resultados"
                 : `${productosFiltrados.length} de ${data.length} productos`}
               {searchTerm && (
-                <span className="ml-1">para <span className="font-medium text-gray-700">"{searchTerm}"</span></span>
+                <span className="ml-1">para <span className="font-medium text-gray-700">&quot;{searchTerm}&quot;</span></span>
               )}
             </p>
           )}
@@ -253,7 +253,7 @@ export default function ProductosPage() {
             </div>
             <h2 className="text-lg font-semibold text-gray-800 mb-1">Sin resultados</h2>
             <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
-              No hay productos que coincidan con <span className="font-medium">"{searchTerm}"</span>.
+              No hay productos que coincidan con <span className="font-medium">&quot;{searchTerm}&quot;</span>.
               Intenta con otros términos.
             </p>
             <button
