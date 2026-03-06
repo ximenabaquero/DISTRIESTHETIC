@@ -21,79 +21,22 @@ export default function LoginPanel({ onLogin }: LoginPanelProps) {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-950">
-
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-slate-900 to-blue-950">
-        {/* Background grid */}
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `linear-gradient(rgba(99,179,237,0.15) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(99,179,237,0.15) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-          }}
-        />
-        {/* Glow */}
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 opacity-10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-0 w-64 h-64 bg-sky-400 opacity-5 rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm">
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-5 h-5">
-              <path fillRule="evenodd" d="M11.484 2.17a.75.75 0 0 1 1.032 0 11.209 11.209 0 0 0 7.877 3.08.75.75 0 0 1 .722.515 12.74 12.74 0 0 1 .635 3.985c0 5.942-4.064 10.933-9.563 12.348a.749.749 0 0 1-.374 0C6.314 20.683 2.25 15.692 2.25 9.75c0-1.39.223-2.73.635-3.985a.75.75 0 0 1 .722-.516l.143.001c2.996 0 5.718-1.17 7.734-3.08ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 0 0 0 1.5h.007a.75.75 0 0 0 0-1.5H12Z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <span className="text-white font-semibold tracking-tight text-lg">MediSupply</span>
+        <div className="flex items-center justify-center mb-8">
+          <span className="text-xl font-bold text-slate-700 tracking-tight">DISTRIESTHETIC</span>
         </div>
 
-        {/* Center copy */}
-        <div className="relative z-10">
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-4">Panel de administración</p>
-          <h1 className="text-white text-4xl font-bold leading-tight mb-4">
-            Gestiona tu<br />inventario médico<br />con confianza.
-          </h1>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-            Acceso exclusivo para administradores autorizados. Toda la actividad queda registrada y auditada.
-          </p>
-        </div>
-
-        {/* Bottom stats */}
-        <div className="relative z-10 flex gap-8">
-          {[
-            { value: '500+', label: 'Clínicas activas' },
-            { value: '99.9%', label: 'Disponibilidad' },
-            { value: 'INVIMA', label: 'Certificado' },
-          ].map((stat, i) => (
-            <div key={i}>
-              <p className="text-white font-bold text-lg">{stat.value}</p>
-              <p className="text-slate-500 text-xs">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-slate-950">
-        <div className="w-full max-w-sm">
-
-          {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-4 h-4">
-                <path fillRule="evenodd" d="M11.484 2.17a.75.75 0 0 1 1.032 0 11.209 11.209 0 0 0 7.877 3.08.75.75 0 0 1 .722.515 12.74 12.74 0 0 1 .635 3.985c0 5.942-4.064 10.933-9.563 12.348a.749.749 0 0 1-.374 0C6.314 20.683 2.25 15.692 2.25 9.75c0-1.39.223-2.73.635-3.985a.75.75 0 0 1 .722-.516l.143.001c2.996 0 5.718-1.17 7.734-3.08ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 0 0 0 1.5h.007a.75.75 0 0 0 0-1.5H12Z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <span className="text-white font-semibold tracking-tight">MediSupply</span>
-          </div>
-
-          <h2 className="text-white text-2xl font-bold mb-1">Acceso Administrador</h2>
-          <p className="text-slate-500 text-sm mb-8">Ingresa tus credenciales para continuar.</p>
+        {/* Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+          <h2 className="text-gray-900 text-xl font-bold mb-1">Panel de administración</h2>
+          <p className="text-gray-500 text-sm mb-6">Ingresa tus credenciales para continuar.</p>
 
           {/* Email */}
           <div className="mb-4">
-            <label className="block text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">
+            <label className="block text-gray-600 text-xs font-medium mb-1.5">
               Correo electrónico
             </label>
             <input
@@ -101,14 +44,14 @@ export default function LoginPanel({ onLogin }: LoginPanelProps) {
               onChange={e => setEmail(e.target.value)}
               onKeyDown={handleKeyDown}
               type="email"
-              placeholder="admin@clinica.com"
-              className="w-full bg-slate-900 border border-slate-800 text-white placeholder:text-slate-600 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              placeholder="admin@ejemplo.com"
+              className="w-full bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
             />
           </div>
 
           {/* Password */}
           <div className="mb-6">
-            <label className="block text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">
+            <label className="block text-gray-600 text-xs font-medium mb-1.5">
               Contraseña
             </label>
             <div className="relative">
@@ -118,12 +61,12 @@ export default function LoginPanel({ onLogin }: LoginPanelProps) {
                 onKeyDown={handleKeyDown}
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="w-full bg-slate-900 border border-slate-800 text-white placeholder:text-slate-600 px-4 py-3 pr-11 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                className="w-full bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 px-4 py-2.5 pr-11 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -144,16 +87,15 @@ export default function LoginPanel({ onLogin }: LoginPanelProps) {
           <button
             onClick={handleSubmit}
             disabled={!email || !password}
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-semibold py-3 rounded-xl transition-colors duration-200 text-sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-100 disabled:text-gray-400 text-white font-semibold py-2.5 rounded-xl transition-colors duration-200 text-sm"
           >
             Iniciar sesión
           </button>
-
-          {/* Footer */}
-          <p className="text-center text-slate-600 text-xs mt-8">
-            Acceso restringido. Solo personal autorizado.
-          </p>
         </div>
+
+        <p className="text-center text-gray-400 text-xs mt-6">
+          Acceso restringido. Solo personal autorizado.
+        </p>
       </div>
     </div>
   );
