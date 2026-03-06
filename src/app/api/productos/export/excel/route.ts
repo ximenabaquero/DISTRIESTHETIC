@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAllProductos } from "@/lib/productosStore";
+import { requireAdmin } from "@/lib/adminAuth";
 import * as XLSX from "xlsx";
 
 export async function GET() {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false, error: "No autorizado." }, { status: 401 });
+  }
   try {
     const productos = await getAllProductos();
     const sheet = XLSX.utils.json_to_sheet(productos);

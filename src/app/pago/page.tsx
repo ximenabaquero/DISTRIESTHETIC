@@ -40,17 +40,8 @@ function PagoContent() {
           setTx(data);
           if (data.status === "APPROVED" && !cartCleared.current) {
             cartCleared.current = true;
-            // Registrar pedido antes de limpiar el carrito
-            fetch('/api/pedidos', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                items: items.map(i => ({ id: i.producto.id, nombre: i.producto.nombre, precio: i.producto.precio, cantidad: i.cantidad })),
-                total: data.amountInCents / 100,
-                metodo_pago: 'wompi',
-                referencia: data.reference,
-              }),
-            }).catch(() => {});
+            // El pedido se registra server-to-server via webhook de Wompi
+            // (/api/payments/wompi-webhook). Solo limpiamos el carrito acá.
             clearCart();
           }
         }

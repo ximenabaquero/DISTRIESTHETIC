@@ -5,13 +5,22 @@ import { NextResponse } from "next/server";
 // SHA256(reference + amountInCents + "COP" + integritySecret)
 export async function POST(request: Request) {
   try {
-    const { reference, amountInCents } = await request.json();
+    const body = await request.json();
+    const { reference, amountInCents } = body;
 
-    if (!reference || !amountInCents) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos" },
-        { status: 400 }
-      );
+    if (
+      typeof reference !== "string" ||
+      !/^DIST-[a-zA-Z0-9_-]{1,60}$/.test(reference)
+    ) {
+      return NextResponse.json({ error: "Referencia inválida" }, { status: 400 });
+    }
+    if (
+      typeof amountInCents !== "number" ||
+      !Number.isInteger(amountInCents) ||
+      amountInCents <= 0 ||
+      amountInCents > 100_000_000_00
+    ) {
+      return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
     }
 
     const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function GET() {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ ok: false }, { status: 401 });
+  }
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const hasUrl = Boolean(supabaseUrl);
@@ -31,11 +35,10 @@ export async function GET() {
     ok: true,
     supabase: {
       configured: hasUrl && hasServiceKey,
-      hasUrl,
-      hasServiceKey, // indica si la variable existe (no revela su valor)
       reachable,
       overridesCount,
-      error: errorMessage,
+      // error se omite en producción para no filtrar detalles internos
+      ...(process.env.NODE_ENV !== 'production' && errorMessage ? { error: errorMessage } : {}),
     }
   });
 }
