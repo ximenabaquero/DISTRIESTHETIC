@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "overrides": [
+    {
+      "id": 1,
+      "imagenUrl": null,
+      "precio": 57890,
+      "stock": 6789
+    },
+    {
+      "id": 2,
+      "precio": 50000,
+      "stock": 0
+    }
+  ],
+  "extras": [],
+  "lastId": 38
+}
