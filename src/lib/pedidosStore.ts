@@ -7,7 +7,7 @@ export type PedidoItem = {
   cantidad: number;
 };
 
-export type PedidoEstado = 'pendiente' | 'pagado' | 'cancelado';
+export type PedidoEstado = 'sin_entregar' | 'entregado' | 'cancelado';
 export type PedidoMetodo = 'whatsapp' | 'wompi';
 
 export interface Pedido {
@@ -18,6 +18,11 @@ export interface Pedido {
   metodoPago: PedidoMetodo;
   estado: PedidoEstado;
   referencia: string | null;
+  nombre: string | null;
+  telefono: string | null;
+  ciudad: string | null;
+  direccion: string | null;
+  notas: string | null;
 }
 
 export interface CreatePedidoData {
@@ -25,6 +30,11 @@ export interface CreatePedidoData {
   total: number;
   metodoPago: PedidoMetodo;
   referencia?: string;
+  nombre?: string;
+  telefono?: string;
+  ciudad?: string;
+  direccion?: string;
+  notas?: string;
 }
 
 let supabase: SupabaseClient | null = null;
@@ -48,6 +58,11 @@ function mapRow(row: Record<string, unknown>): Pedido {
     metodoPago: String(row.metodo_pago) as PedidoMetodo,
     estado: String(row.estado) as PedidoEstado,
     referencia: typeof row.referencia === 'string' ? row.referencia : null,
+    nombre: typeof row.nombre === 'string' ? row.nombre : null,
+    telefono: typeof row.telefono === 'string' ? row.telefono : null,
+    ciudad: typeof row.ciudad === 'string' ? row.ciudad : null,
+    direccion: typeof row.direccion === 'string' ? row.direccion : null,
+    notas: typeof row.notas === 'string' ? row.notas : null,
   };
 }
 
@@ -61,7 +76,12 @@ export async function createPedido(data: CreatePedidoData): Promise<Pedido> {
       total: data.total,
       metodo_pago: data.metodoPago,
       referencia: data.referencia ?? null,
-      estado: 'pendiente',
+      estado: 'sin_entregar',
+      nombre: data.nombre ?? null,
+      telefono: data.telefono ?? null,
+      ciudad: data.ciudad ?? null,
+      direccion: data.direccion ?? null,
+      notas: data.notas ?? null,
     })
     .select()
     .single();
@@ -102,6 +122,19 @@ export async function getPedidoById(id: number): Promise<Pedido | null> {
   return mapRow(data as Record<string, unknown>);
 }
 
+export async function getPedidoByReferencia(referencia: string): Promise<Pedido | null> {
+  const sb = await getSupabase();
+
+  const { data, error } = await sb
+    .from('pedidos')
+    .select('*')
+    .eq('referencia', referencia)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return mapRow(data as Record<string, unknown>);
+}
+
 export async function updatePedidoEstado(id: number, estado: PedidoEstado): Promise<Pedido | null> {
   const sb = await getSupabase();
 
@@ -114,6 +147,27 @@ export async function updatePedidoEstado(id: number, estado: PedidoEstado): Prom
 
   if (error || !updated) {
     console.error('[pedidosStore] Error actualizando estado:', error?.message);
+    return null;
+  }
+
+  return mapRow(updated as Record<string, unknown>);
+}
+
+export async function updatePedidoEstadoByReferencia(
+  referencia: string,
+  estado: PedidoEstado,
+): Promise<Pedido | null> {
+  const sb = await getSupabase();
+
+  const { data: updated, error } = await sb
+    .from('pedidos')
+    .update({ estado })
+    .eq('referencia', referencia)
+    .select()
+    .single();
+
+  if (error || !updated) {
+    console.error('[pedidosStore] Error actualizando estado por referencia:', error?.message);
     return null;
   }
 

@@ -19,7 +19,7 @@ export function useAdmin() {
   const [onlyDirty, setOnlyDirty] = useState(false);
   const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
   const [removingImageId, setRemovingImageId] = useState<number | null>(null);
-  const [contactInfo, setContactInfo] = useState({ telefono: '', whatsapp: '' });
+  const [contactInfo, setContactInfo] = useState({ telefono: '', whatsapp: '', email: '' });
   const [contactDirty, setContactDirty] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -82,6 +82,7 @@ export function useAdmin() {
           setContactInfo({
             telefono: contactoJson?.contact?.telefono ?? '',
             whatsapp: contactoJson?.contact?.whatsapp ?? '',
+            email:    contactoJson?.contact?.email    ?? '',
           });
           setContactDirty(false);
         }
@@ -330,7 +331,7 @@ export function useAdmin() {
   // ──────────────────────────────────────────────────────────────
   // Info de contacto
   // ──────────────────────────────────────────────────────────────
-  const handleContactField = useCallback((field: 'telefono' | 'whatsapp', value: string) => {
+  const handleContactField = useCallback((field: 'telefono' | 'whatsapp' | 'email', value: string) => {
     setContactInfo(prev => ({ ...prev, [field]: value }));
     setContactDirty(true);
   }, []);

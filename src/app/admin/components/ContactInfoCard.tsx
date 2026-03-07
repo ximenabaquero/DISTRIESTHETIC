@@ -1,19 +1,22 @@
 'use client';
 
 interface ContactInfoCardProps {
-  contacto: { telefono: string; whatsapp: string };
+  contacto: { telefono: string; whatsapp: string; email: string };
   dirty: boolean;
   saving: boolean;
-  onFieldChange: (field: 'telefono' | 'whatsapp', value: string) => void;
+  onFieldChange: (field: 'telefono' | 'whatsapp' | 'email', value: string) => void;
   onSave: () => void;
 }
 
 export default function ContactInfoCard({ contacto, dirty, saving, onFieldChange, onSave }: ContactInfoCardProps) {
   return (
     <section className="bg-white shadow rounded-xl p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-semibold text-gray-900 mb-1">
         Información de contacto público
       </h2>
+      <p className="text-sm text-gray-400 mb-5">
+        Estos datos se usan en el sitio web y en la comunicación con clientes.
+      </p>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="flex flex-col space-y-2">
           <span className="text-sm font-medium text-gray-700">Teléfono</span>
@@ -32,6 +35,19 @@ export default function ContactInfoCard({ contacto, dirty, saving, onFieldChange
             className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="573046831493"
           />
+        </label>
+        <label className="flex flex-col space-y-2 md:col-span-2">
+          <span className="text-sm font-medium text-gray-700">Correo electrónico</span>
+          <input
+            type="email"
+            value={contacto.email}
+            onChange={e => onFieldChange('email', e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="contacto@distriesthetic.com"
+          />
+          <p className="text-xs text-gray-400">
+            Se mostrará en la página de contacto y en las notificaciones a clientes.
+          </p>
         </label>
       </div>
       <div className="mt-6 flex justify-end">

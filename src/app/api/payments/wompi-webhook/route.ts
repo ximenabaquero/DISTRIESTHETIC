@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
-import { createPedido } from "@/lib/pedidosStore";
+import { getPedidoByReferencia, updatePedidoEstadoByReferencia } from "@/lib/pedidosStore";
 
 /**
  * Webhook server-to-server de Wompi.
@@ -72,27 +72,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const amountInCents =
-    typeof tx.amount_in_cents === "number" ? tx.amount_in_cents : 0;
-
-  // Los ítems no están en el webhook de Wompi — los recuperamos de la metadata
-  // que se guarda al generar la firma (reference lleva el ID de la sesión).
-  // Por ahora guardamos el pedido con la información disponible del webhook.
-  // La solución completa requiere persistir el carrito server-side al generar la referencia.
   try {
-    await createPedido({
-      items: [],  // se actualizan cuando se implementa persistencia de carrito server-side
-      total: amountInCents / 100,
-      metodoPago: "wompi",
-      referencia: reference,
-    });
-  } catch (err) {
-    // Si el pedido ya existe (reintento de Wompi), ignorar gracefully
-    const msg = err instanceof Error ? err.message : "";
-    if (!msg.includes("duplicate") && !msg.includes("unique")) {
-      console.error("[wompi-webhook] Error creando pedido:", msg);
-      return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    // Si el pedido ya fue creado al iniciar el pago, solo actualizamos el estado
+    const existente = await getPedidoByReferencia(reference);
+    if (existente) {
+      await updatePedidoEstadoByReferencia(reference, "entregado");
     }
+    // Si no existe (caso edge), no creamos uno vacío — el pedido se creó client-side
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    console.error("[wompi-webhook] Error procesando pedido:", msg);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

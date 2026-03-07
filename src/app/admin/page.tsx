@@ -131,9 +131,9 @@ export default function AdminPage() {
               >
                 {item.icon}
                 {item.label}
-                {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'pendiente').length > 0 && (
+                {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'sin_entregar').length > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
-                    {pedidos.filter(p => p.estado === 'pendiente').length}
+                    {pedidos.filter(p => p.estado === 'sin_entregar').length}
                   </span>
                 )}
               </button>

@@ -216,9 +216,9 @@ export async function GET(
       font-size: 11px;
       font-weight: 600;
     }
-    .badge-pendiente { background: #fef9c3; color: #854d0e; }
-    .badge-pagado { background: #dcfce7; color: #166534; }
-    .badge-cancelado { background: #fee2e2; color: #991b1b; }
+    .badge-sin_entregar { background: #fef9c3; color: #854d0e; }
+    .badge-entregado    { background: #dcfce7; color: #166534; }
+    .badge-cancelado    { background: #fee2e2; color: #991b1b; }
     /* Print */
     .print-btn-row {
       display: flex;
@@ -294,9 +294,37 @@ export async function GET(
         <div class="meta-card">
           <p class="label">Estado</p>
           <p class="value">
-            <span class="badge badge-${pedido.estado}">${pedido.estado.charAt(0).toUpperCase() + pedido.estado.slice(1)}</span>
+            <span class="badge badge-${pedido.estado}">${
+              pedido.estado === 'sin_entregar' ? 'Sin entregar' :
+              pedido.estado === 'entregado'    ? 'Entregado' : 'Cancelado'
+            }</span>
           </p>
         </div>
+        ${pedido.nombre ? `
+        <div class="meta-card">
+          <p class="label">Nombre del destinatario</p>
+          <p class="value">${pedido.nombre}</p>
+        </div>` : ''}
+        ${pedido.telefono ? `
+        <div class="meta-card">
+          <p class="label">Teléfono</p>
+          <p class="value">${pedido.telefono}</p>
+        </div>` : ''}
+        ${pedido.ciudad ? `
+        <div class="meta-card">
+          <p class="label">Ciudad</p>
+          <p class="value">${pedido.ciudad}</p>
+        </div>` : ''}
+        ${pedido.direccion ? `
+        <div class="meta-card" style="grid-column: 1 / -1">
+          <p class="label">Dirección de entrega</p>
+          <p class="value">${pedido.direccion}</p>
+        </div>` : ''}
+        ${pedido.notas ? `
+        <div class="meta-card" style="grid-column: 1 / -1">
+          <p class="label">Instrucciones de entrega</p>
+          <p class="value" style="font-style: italic; color: #475569;">${pedido.notas}</p>
+        </div>` : ''}
         ${pedido.referencia ? `
         <div class="meta-card" style="grid-column: 1 / -1">
           <p class="label">Referencia de pago</p>

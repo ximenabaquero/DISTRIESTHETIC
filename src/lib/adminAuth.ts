@@ -21,7 +21,7 @@ export async function requireAdmin(): Promise<boolean> {
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret) {
     console.warn('[adminAuth] ADMIN_SESSION_SECRET no está configurado.');
-    return false;
+    return false; 
   }
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE);

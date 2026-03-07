@@ -3,11 +3,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export interface ContactInfo {
   telefono: string;
   whatsapp: string;
+  email: string;
 }
 
 const defaults: ContactInfo = {
   telefono: '304 683 1493',
   whatsapp: '573046831493',
+  email: '',
 };
 
 let supabase: SupabaseClient | null = null;
@@ -28,7 +30,7 @@ export async function getContactInfo(): Promise<ContactInfo> {
 
   const { data, error } = await sb
     .from('contact_info')
-    .select('telefono, whatsapp')
+    .select('telefono, whatsapp, email')
     .eq('id', 1)
     .single();
 
@@ -43,6 +45,7 @@ export async function getContactInfo(): Promise<ContactInfo> {
   return {
     telefono: (data.telefono as string)?.trim() || defaults.telefono,
     whatsapp: (data.whatsapp as string)?.trim() || defaults.whatsapp,
+    email: (data.email as string)?.trim() || '',
   };
 }
 
@@ -53,6 +56,7 @@ export async function updateContactInfo(info: ContactInfo): Promise<ContactInfo>
   const sanitized: ContactInfo = {
     telefono: info.telefono.trim(),
     whatsapp: info.whatsapp.trim(),
+    email: info.email.trim(),
   };
 
   const { error } = await sb

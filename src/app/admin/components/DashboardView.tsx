@@ -62,7 +62,7 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
   // ── KPIs ────────────────────────────────────────────────────────────────
   const pedidosHoy = pedidos.filter(p => p.createdAt.slice(0, 10) === todayStr);
   const pedidosMes = pedidos.filter(p => p.createdAt.slice(0, 7) === monthStr);
-  const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente');
+  const pedidosSinEntregar = pedidos.filter(p => p.estado === 'sin_entregar');
   const ingresosMes = pedidosMes
     .filter(p => p.estado !== 'cancelado')
     .reduce((sum, p) => sum + p.total, 0);
@@ -71,7 +71,7 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthStr = prevMonth.toISOString().slice(0, 7);
   const ingresosMesAnterior = pedidos
-    .filter(p => p.createdAt.slice(0, 7) === prevMonthStr && p.estado !== 'cancelado')
+    .filter(p => p.createdAt.slice(0, 7) === prevMonthStr && p.estado === 'entregado')
     .reduce((sum, p) => sum + p.total, 0);
   const pctCambio = ingresosMesAnterior > 0
     ? ((ingresosMes - ingresosMesAnterior) / ingresosMesAnterior) * 100
@@ -91,7 +91,7 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
 
   // ── Gráfica 2: top 5 productos del mes ──────────────────────────────────
   const conteoProductos: Record<string, number> = {};
-  pedidosMes.filter(p => p.estado !== 'cancelado').forEach(pedido => {
+  pedidosMes.filter(p => p.estado === 'entregado').forEach(pedido => {
     pedido.items.forEach(item => {
       conteoProductos[item.nombre] = (conteoProductos[item.nombre] ?? 0) + item.cantidad;
     });
@@ -139,11 +139,11 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
       ),
     },
     {
-      label: 'Pendientes',
-      value: loadingPedidos ? '—' : String(pedidosPendientes.length),
-      sub: loadingPedidos ? 'Cargando...' : pedidosPendientes.length > 0 ? 'Requieren atención' : 'Todo al día',
-      iconBg: pedidosPendientes.length > 0 ? 'bg-yellow-50' : 'bg-gray-50',
-      iconColor: pedidosPendientes.length > 0 ? 'text-yellow-500' : 'text-gray-400',
+      label: 'Sin entregar',
+      value: loadingPedidos ? '—' : String(pedidosSinEntregar.length),
+      sub: loadingPedidos ? 'Cargando...' : pedidosSinEntregar.length > 0 ? 'Requieren atención' : 'Todo al día',
+      iconBg: pedidosSinEntregar.length > 0 ? 'bg-yellow-50' : 'bg-gray-50',
+      iconColor: pedidosSinEntregar.length > 0 ? 'text-yellow-500' : 'text-gray-400',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -320,11 +320,11 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-                      p.estado === 'pagado' ? 'bg-green-50 text-green-700 border-green-100' :
-                      p.estado === 'cancelado' ? 'bg-red-50 text-red-700 border-red-100' :
-                      'bg-yellow-50 text-yellow-700 border-yellow-100'
+                      p.estado === 'entregado'    ? 'bg-green-50 text-green-700 border-green-100' :
+                      p.estado === 'cancelado'    ? 'bg-red-50 text-red-700 border-red-100' :
+                                                    'bg-yellow-50 text-yellow-700 border-yellow-100'
                     }`}>
-                      {p.estado}
+                      {p.estado === 'entregado' ? 'Entregado' : p.estado === 'cancelado' ? 'Cancelado' : 'Sin entregar'}
                     </span>
                     <span className="text-sm font-bold text-gray-800">{fmt(p.total)}</span>
                   </div>

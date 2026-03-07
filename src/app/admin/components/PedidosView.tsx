@@ -17,13 +17,19 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
 
 const estadoBadge: Record<PedidoEstado, string> = {
-  pendiente: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-  pagado: 'bg-green-50 text-green-700 border-green-100',
-  cancelado: 'bg-red-50 text-red-700 border-red-100',
+  sin_entregar: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+  entregado:    'bg-green-50 text-green-700 border-green-100',
+  cancelado:    'bg-red-50 text-red-700 border-red-100',
+};
+
+const estadoLabel: Record<PedidoEstado, string> = {
+  sin_entregar: 'Sin entregar',
+  entregado:    'Entregado',
+  cancelado:    'Cancelado',
 };
 
 const metodoBadge: Record<PedidoMetodo, string> = {
-  wompi: 'bg-indigo-50 text-indigo-700',
+  wompi:    'bg-indigo-50 text-indigo-700',
   whatsapp: 'bg-green-50 text-green-700',
 };
 
@@ -60,9 +66,9 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
 
   const kpis = useMemo(() => {
     const totalPeriodo = visible.reduce((s, p) => s + p.total, 0);
-    const ingresosPagados = visible.filter(p => p.estado === 'pagado').reduce((s, p) => s + p.total, 0);
-    const pendientes = visible.filter(p => p.estado === 'pendiente').length;
-    return { totalPeriodo, ingresosPagados, pendientes };
+    const ingresosEntregados = visible.filter(p => p.estado === 'entregado').reduce((s, p) => s + p.total, 0);
+    const sinEntregar = visible.filter(p => p.estado === 'sin_entregar').length;
+    return { totalPeriodo, ingresosEntregados, sinEntregar };
   }, [visible]);
 
   return (
@@ -104,8 +110,8 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
             className="text-sm border rounded-lg px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="todos">Todos</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="pagado">Pagado</option>
+            <option value="sin_entregar">Sin entregar</option>
+            <option value="entregado">Entregado</option>
             <option value="cancelado">Cancelado</option>
           </select>
         </div>
@@ -146,14 +152,14 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
             <p className="text-xs text-gray-400">{visible.length} pedido{visible.length !== 1 ? 's' : ''}</p>
           </div>
           <div className="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3">
-            <p className="text-xs font-medium text-gray-400 mb-0.5">Ingresos confirmados</p>
-            <p className="text-lg font-bold text-green-700">{fmt(kpis.ingresosPagados)}</p>
-            <p className="text-xs text-gray-400">{visible.filter(p => p.estado === 'pagado').length} pagado{visible.filter(p => p.estado === 'pagado').length !== 1 ? 's' : ''}</p>
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Ingresos entregados</p>
+            <p className="text-lg font-bold text-green-700">{fmt(kpis.ingresosEntregados)}</p>
+            <p className="text-xs text-gray-400">{visible.filter(p => p.estado === 'entregado').length} entregado{visible.filter(p => p.estado === 'entregado').length !== 1 ? 's' : ''}</p>
           </div>
-          <div className={`rounded-xl border shadow-sm px-4 py-3 ${kpis.pendientes > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-100'}`}>
-            <p className="text-xs font-medium text-gray-400 mb-0.5">Pendientes de cobro</p>
-            <p className={`text-lg font-bold ${kpis.pendientes > 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{kpis.pendientes}</p>
-            <p className="text-xs text-gray-400">{kpis.pendientes > 0 ? 'Requieren atención' : 'Todo al día'}</p>
+          <div className={`rounded-xl border shadow-sm px-4 py-3 ${kpis.sinEntregar > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-100'}`}>
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Sin entregar</p>
+            <p className={`text-lg font-bold ${kpis.sinEntregar > 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{kpis.sinEntregar}</p>
+            <p className="text-xs text-gray-400">{kpis.sinEntregar > 0 ? 'Requieren atención' : 'Todo al día'}</p>
           </div>
         </div>
       )}
@@ -174,6 +180,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Fecha</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Productos</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Entrega</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Método</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
@@ -184,13 +191,13 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                 {visible.map(p => {
                   const isBusy = updatingId === p.id;
                   const isExpanded = expandedRows.has(p.id);
-                  const isPendiente = p.estado === 'pendiente';
+                  const isSinEntregar = p.estado === 'sin_entregar';
                   const itemsToShow = isExpanded ? p.items : p.items.slice(0, 2);
                   return (
                     <tr
                       key={p.id}
                       className={`transition-colors ${
-                        isPendiente
+                        isSinEntregar
                           ? 'bg-yellow-50 border-l-4 border-yellow-400 hover:bg-yellow-100'
                           : 'border-l-4 border-transparent hover:bg-gray-50'
                       }`}
@@ -216,6 +223,20 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                           )}
                         </div>
                       </td>
+                      <td className="px-4 py-3 max-w-[160px]">
+                        {(p.telefono || p.direccion) ? (
+                          <div className="space-y-0.5">
+                            {p.telefono && (
+                              <p className="text-xs text-gray-700 font-medium">{p.telefono}</p>
+                            )}
+                            {p.direccion && (
+                              <p className="text-xs text-gray-500 truncate" title={p.direccion}>{p.direccion}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">{fmt(p.total)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
@@ -224,7 +245,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${estadoBadge[p.estado]}`}>
-                          {p.estado}
+                          {estadoLabel[p.estado]}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -240,13 +261,13 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                             </svg>
                             Cobro
                           </a>
-                          {p.estado !== 'pagado' && (
+                          {p.estado !== 'entregado' && (
                             <button
-                              onClick={() => onUpdateEstado(p.id, 'pagado')}
+                              onClick={() => onUpdateEstado(p.id, 'entregado')}
                               disabled={isBusy}
                               className="text-xs font-medium px-2 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors"
                             >
-                              {isBusy ? '...' : 'Pagado'}
+                              {isBusy ? '...' : 'Entregado'}
                             </button>
                           )}
                           {p.estado !== 'cancelado' && (
@@ -258,13 +279,13 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                               {isBusy ? '...' : 'Cancelar'}
                             </button>
                           )}
-                          {p.estado !== 'pendiente' && (
+                          {p.estado !== 'sin_entregar' && (
                             <button
-                              onClick={() => onUpdateEstado(p.id, 'pendiente')}
+                              onClick={() => onUpdateEstado(p.id, 'sin_entregar')}
                               disabled={isBusy}
                               className="text-xs font-medium px-2 py-1 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 disabled:opacity-50 transition-colors"
                             >
-                              {isBusy ? '...' : 'Pendiente'}
+                              {isBusy ? '...' : 'Sin entregar'}
                             </button>
                           )}
                         </div>

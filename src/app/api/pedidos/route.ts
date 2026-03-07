@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json();
-    const { items, total, metodo_pago, referencia } = body;
+    const { items, total, metodo_pago, referencia, nombre, telefono, ciudad, direccion, notas } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0 || items.length > 50) {
       return NextResponse.json({ ok: false, error: 'Items inválidos.' }, { status: 400 });
@@ -62,12 +62,32 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json({ ok: false, error: 'Referencia inválida.' }, { status: 400 });
     }
+    if (nombre !== undefined && (typeof nombre !== 'string' || nombre.length > 200)) {
+      return NextResponse.json({ ok: false, error: 'Nombre inválido.' }, { status: 400 });
+    }
+    if (telefono !== undefined && (typeof telefono !== 'string' || telefono.length > 20)) {
+      return NextResponse.json({ ok: false, error: 'Teléfono inválido.' }, { status: 400 });
+    }
+    if (ciudad !== undefined && (typeof ciudad !== 'string' || ciudad.length > 100)) {
+      return NextResponse.json({ ok: false, error: 'Ciudad inválida.' }, { status: 400 });
+    }
+    if (direccion !== undefined && (typeof direccion !== 'string' || direccion.length > 500)) {
+      return NextResponse.json({ ok: false, error: 'Dirección inválida.' }, { status: 400 });
+    }
+    if (notas !== undefined && (typeof notas !== 'string' || notas.length > 500)) {
+      return NextResponse.json({ ok: false, error: 'Notas inválidas.' }, { status: 400 });
+    }
 
     const data: CreatePedidoData = {
       items,
       total,
       metodoPago: metodo_pago,
       referencia: typeof referencia === 'string' ? referencia : undefined,
+      nombre: typeof nombre === 'string' ? nombre : undefined,
+      telefono: typeof telefono === 'string' ? telefono : undefined,
+      ciudad: typeof ciudad === 'string' ? ciudad : undefined,
+      direccion: typeof direccion === 'string' ? direccion : undefined,
+      notas: typeof notas === 'string' ? notas : undefined,
     };
 
     const pedido = await createPedido(data);
@@ -77,7 +97,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   if (!(await requireAdmin())) {
     return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
   }

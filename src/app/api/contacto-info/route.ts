@@ -20,6 +20,7 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const telefono = (body?.telefono ?? "").toString().trim();
     const whatsapp = (body?.whatsapp ?? "").toString().trim();
+    const email    = (body?.email    ?? "").toString().trim();
 
     if (!telefono || !whatsapp) {
       return NextResponse.json(
@@ -28,7 +29,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    const contact = await updateContactInfo({ telefono, whatsapp });
+    const contact = await updateContactInfo({ telefono, whatsapp, email });
     return NextResponse.json({ ok: true, contact });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error inesperado";
