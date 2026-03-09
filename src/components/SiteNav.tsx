@@ -60,24 +60,33 @@ export function SiteNav() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Bloquear scroll del body cuando el overlay está abierto
+  useEffect(() => {
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    return () => { document.documentElement.style.overflow = ""; };
+  }, [open]);
+
+  // Cerrar al cambiar de ruta
+  useEffect(() => { setOpen(false); }, [pathname]);
+
   const close = () => setOpen(false);
 
   return (
-    <header
-      className="sticky top-0 z-50 w-full transition-all duration-300"
-      style={{
-        height: 64,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        background: isScrolled ? "rgba(255,255,255,0.95)" : "#07091C",
-        borderBottom: isScrolled ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(240,244,255,0.06)",
-        boxShadow: isScrolled ? "0 1px 12px rgba(0,0,0,0.07)" : "none",
-      }}
-    >
-      <nav className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between">
+    <>
+      <header
+        className="sticky top-0 z-50 w-full transition-all duration-300"
+        style={{
+          height: 64,
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          background: isScrolled ? "rgba(255,255,255,0.95)" : "#07091C",
+          borderBottom: isScrolled ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(240,244,255,0.06)",
+          boxShadow: isScrolled ? "0 1px 12px rgba(0,0,0,0.07)" : "none",
+        }}
+      >
+        <nav className="container mx-auto px-4 lg:px-8 h-full flex items-center justify-between">
 
-          {/* Logo — más grande, letra-spacing, acento de color */}
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0 transition-transform active:scale-95" onClick={close}>
             <Image src="/logodistsin.png" alt="Logo" width={160} height={58} className="h-11 w-auto object-contain" priority />
             <span className="hidden lg:block text-sm font-black tracking-[0.28em] uppercase leading-none">
@@ -86,7 +95,7 @@ export function SiteNav() {
             </span>
           </Link>
 
-          {/* Desktop Nav — subrayado activo + carrito dentro del grupo */}
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -96,12 +105,8 @@ export function SiteNav() {
                   href={link.href}
                   className={`relative px-4 py-2 text-sm font-semibold transition-all duration-300 active:scale-95 ${
                     isScrolled
-                      ? isActive
-                        ? "text-blue-600"
-                        : "text-slate-500 hover:text-slate-900"
-                      : isActive
-                        ? "text-white"
-                        : "text-slate-300 hover:text-white"
+                      ? isActive ? "text-blue-600" : "text-slate-500 hover:text-slate-900"
+                      : isActive ? "text-white" : "text-slate-300 hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -111,15 +116,14 @@ export function SiteNav() {
                 </Link>
               );
             })}
-
-            {/* Carrito dentro del navbar con separador */}
             <div className={`ml-2 pl-3 border-l ${isScrolled ? "border-slate-200" : "border-white/15"}`}>
               <CartIcon count={itemCount} isActive={pathname === "/carrito"} inverted={!isScrolled} />
             </div>
           </div>
 
-          {/* Hamburger móvil */}
+          {/* Botón hamburguesa — solo móvil */}
           <button
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
             className={`md:hidden p-2 rounded-xl active:scale-90 transition-transform ${
               isScrolled ? "bg-slate-50 text-slate-600" : "bg-white/10 text-white"
             }`}
@@ -131,46 +135,86 @@ export function SiteNav() {
               <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
             </div>
           </button>
+        </nav>
+      </header>
+
+      {/* ── Overlay full-screen móvil ── */}
+      <div
+        className={`fixed inset-0 z-[60] flex flex-col md:hidden transition-opacity duration-300 ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        style={{
+          background: "rgba(7,9,28,0.97)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        }}
+      >
+        {/* Fila superior: logo + botón X */}
+        <div
+          className="flex items-center justify-between px-4 flex-shrink-0"
+          style={{ height: 64, borderBottom: "1px solid rgba(240,244,255,0.07)" }}
+        >
+          <Link href="/" onClick={close} className="flex items-center gap-3">
+            <Image src="/logodistsin.png" alt="Logo" width={120} height={44} className="h-10 w-auto object-contain" />
+          </Link>
+          <button
+            aria-label="Cerrar menú"
+            onClick={close}
+            className="p-2 rounded-xl bg-white/10 text-white active:scale-90 transition-transform"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* Mobile Menu */}
-        <div className={`md:hidden overflow-hidden transition-all duration-500 ${open ? "max-h-[500px] opacity-100 mt-4" : "max-h-0 opacity-0"}`}>
-          <div className="flex flex-col gap-2 pb-4">
-            {navLinks.map((link, index) => {
-              const isActive = pathname === link.href;
-              return (
-                <div
-                  key={link.href}
-                  style={{ transitionDelay: `${index * 50}ms` }}
-                  className={`flex items-center justify-between px-5 rounded-2xl transition-all duration-300 ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-lg translate-x-1"
-                      : isScrolled
-                        ? "bg-slate-50 text-slate-600"
-                        : "bg-white/[0.08] text-slate-200 border border-white/10"
-                  }`}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={close}
-                    className="flex-grow py-4 text-base font-bold active:scale-[0.98] transition-transform"
-                  >
-                    {link.label}
-                  </Link>
-                  <div className="py-2">
-                    <CartIcon
-                      count={itemCount}
-                      isActive={pathname === "/carrito"}
-                      inverted={isActive || !isScrolled}
-                      onClick={close}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {/* Links de navegación centrados */}
+        <div className="flex-1 flex flex-col justify-center px-6 gap-2">
+          {navLinks.map((link, i) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={close}
+                className={`flex items-center gap-4 px-6 py-5 rounded-2xl text-xl font-bold transition-all duration-200 active:scale-[0.98] ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                    : "text-slate-200 hover:bg-white/[0.07] hover:text-white"
+                }`}
+                style={{ transitionDelay: open ? `${i * 40}ms` : "0ms" }}
+              >
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />}
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
-      </nav>
-    </header>
+
+        {/* Footer overlay: acceso al carrito */}
+        <div
+          className="px-6 pb-10 pt-4 flex-shrink-0"
+          style={{ borderTop: "1px solid rgba(240,244,255,0.07)" }}
+        >
+          <Link
+            href="/carrito"
+            onClick={close}
+            className="flex items-center justify-between w-full px-6 py-4 rounded-2xl bg-white/[0.06] text-slate-300 hover:bg-white/[0.10] transition-colors active:scale-[0.98]"
+          >
+            <span className="font-semibold">Ver carrito</span>
+            <div className="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] text-[10px] font-bold rounded-full flex items-center justify-center px-1 bg-red-500 text-white">
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              )}
+            </div>
+          </Link>
+        </div>
+      </div>
+    </>
   );
 }
