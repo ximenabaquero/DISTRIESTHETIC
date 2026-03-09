@@ -58,12 +58,12 @@ export default function ContactForm() {
 
   return (
     <div className="bg-[#111c30] rounded-xl border p-8" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-      <h2 className="text-xl font-bold mb-6 text-[#f0f4ff]">Envíanos un mensaje</h2>
+      <h2 className="text-xl font-bold mb-6 text-[#f0f4ff]">Escríbenos</h2>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="nombre" className="block text-sm font-medium text-[#f0f4ff] mb-1.5">
-              Nombre *
+              Nombre o empresa *
             </label>
             <input
               type="text"
@@ -74,7 +74,7 @@ export default function ContactForm() {
               onChange={handleChange}
               className="w-full px-3.5 py-2.5 rounded-lg text-sm text-[#f0f4ff] bg-[#0b1221] placeholder:text-[#8899bb] focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-              placeholder="Tu nombre completo"
+              placeholder="Tu nombre o el nombre de tu empresa"
             />
           </div>
           <div>
@@ -124,7 +124,7 @@ export default function ContactForm() {
             onChange={handleChange}
             className="w-full px-3.5 py-2.5 rounded-lg text-sm text-[#f0f4ff] bg-[#0b1221] placeholder:text-[#8899bb] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-            placeholder="Cuéntanos en qué podemos ayudarte..."
+            placeholder="¿Qué productos necesitas? Cuéntanos sobre tu empresa o procedimientos..."
           />
         </div>
 

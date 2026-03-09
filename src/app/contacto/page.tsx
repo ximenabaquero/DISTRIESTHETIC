@@ -5,6 +5,7 @@ import ContactForm from "./components/ContactForm";
 import WhatsAppCard from "./components/WhatsAppCard";
 import ContactInfoCard from "./components/ContactInfoCard";
 import ContactFaq from "./components/ContactFaq";
+import EkgDivider from "@/components/EkgDivider";
 
 export const metadata = {
   title: "Contacto – DISTRIESTHETIC",
@@ -31,8 +32,10 @@ export default async function ContactoPage() {
             Respondemos en menos de 2 horas
           </div>
           <h1 className="text-3xl font-bold text-[#f0f4ff]">Contáctanos</h1>
-          <p className="text-[#8899bb] mt-2 max-w-lg">Estamos listos para atenderte. Escríbenos por el formulario, por WhatsApp o consúltanos directamente.</p>
+          <p className="text-[#8899bb] mt-2 max-w-lg">¿Tu empresa necesita insumos médicos o estéticos? Cuéntanos qué productos necesitas y te asesoramos. Envíanos un mensaje con el nombre de tu empresa o tu nombre, email, teléfono y consulta.</p>
         </div>
+
+        <EkgDivider className="mb-8" />
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Formulario — único componente client */}
@@ -44,6 +47,8 @@ export default async function ContactoPage() {
             <ContactInfoCard telefono={contacto.telefono} email="charliegil2704@gmail.com" />
           </div>
         </div>
+
+        <EkgDivider className="mt-8" />
 
         <ContactFaq />
       </main>

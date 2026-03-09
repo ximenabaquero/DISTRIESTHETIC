@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: "¿Cuál es el pedido mínimo?",
-    a: "No manejamos mínimo de pedido. Puedes solicitar desde una unidad. Para pedidos al por mayor contáctanos por WhatsApp para condiciones especiales.",
+    a: "Trabajamos con pedidos al por mayor para centros médicos, clínicas, esteticistas y profesionales del sector. Contáctanos por WhatsApp para conocer condiciones y precios especiales según tu volumen.",
     gradient: "from-[#00c8a0] to-[#1a6cf6]",
     icon: (
       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,8 +27,8 @@ const faqs = [
     tag: "Pedidos",
   },
   {
-    q: "¿Trabajan con centros estéticos pequeños?",
-    a: "¡Sí! Atendemos tanto a centros estéticos independientes como a grandes cadenas y clínicas. Nos adaptamos al volumen de cada cliente.",
+    q: "¿A qué tipo de clientes atienden?",
+    a: "Atendemos a centros médicos, clínicas, hospitales, centros estéticos y profesionales independientes como esteticistas, médicos y cirujanos que necesitan insumos para sus procedimientos.",
     gradient: "from-[#1a6cf6] to-[#6366f1]",
     icon: (
       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

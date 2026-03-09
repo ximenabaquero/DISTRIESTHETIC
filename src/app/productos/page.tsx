@@ -6,6 +6,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { ProductCard } from "@/components/ProductCard";
 import { type Producto } from "@/data/productos";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import EkgDivider from "@/components/EkgDivider";
 
 // ── Category icons (SVG) ──────────────────────────────────────────────────────
 
@@ -326,8 +327,10 @@ function ProductosContent() {
           </div>
         )}
 
+        <EkgDivider className="mt-16 mb-8" />
+
         {/* WhatsApp CTA */}
-        <div className="mt-16 bg-gray-900 rounded-2xl px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-gray-900 rounded-2xl px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="text-white text-xl font-bold mb-1">
               ¿No encuentras lo que buscas?

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { type Producto } from "@/data/productos";
-import { WhatsAppButton } from "./WhatsAppButton";
 import { useCart } from "@/context/CartContext";
 
 // Clases estáticas para que Tailwind no las purgue en producción
@@ -231,7 +230,6 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
           <span className="text-slate-500">{icono}</span>
           {categoriaNombre}
         </span>
-        {!enCarrito && <WhatsAppButton producto={producto} />}
       </div>
     </div>
   );

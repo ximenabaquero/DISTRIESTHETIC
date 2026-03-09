@@ -25,7 +25,7 @@ export default function WhatsAppCard({ whatsapp, telefono }: Props) {
             <h3 className="font-bold text-white">WhatsApp directo</h3>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/25 text-xs font-semibold text-green-400">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Respuesta en &lt; 2 h
+              Respuesta en menos de 2 horas
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-0.5 mb-3">
