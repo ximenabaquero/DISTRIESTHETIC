@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,142 +13,138 @@ const navLinks = [
   { href: "/admin", label: "Panel" },
 ];
 
+interface CartIconProps {
+  count: number;
+  isActive: boolean;
+  inverted?: boolean;
+  onClick?: () => void;
+}
+
+const CartIcon = ({ count, isActive, inverted, onClick }: CartIconProps) => (
+  <Link
+    href="/carrito"
+    onClick={(e) => {
+      // Evitamos que el click afecte a elementos padre si los hubiera
+      e.stopPropagation();
+      onClick?.();
+    }}
+    className={`relative inline-flex items-center justify-center p-2 rounded-xl transition-all duration-300 active:scale-90 ${
+      inverted 
+        ? "text-white hover:bg-white/20" 
+        : isActive
+          ? "bg-blue-600 text-white shadow-md"
+          : "text-slate-600 hover:bg-slate-100"
+    }`}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+    </svg>
+    {count > 0 && (
+      <span className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 animate-in zoom-in duration-300 ${
+        inverted || isActive ? "bg-white text-blue-600 border-blue-600" : "bg-red-500 text-white border-white"
+      }`}>
+        {count > 99 ? "99+" : count}
+      </span>
+    )}
+  </Link>
+);
+
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { itemCount } = useCart();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const close = () => setOpen(false);
 
   return (
-    <nav className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-md">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-
-          {/* Logo — siempre con pill blanco para legibilidad sobre cualquier fondo */}
-          <Link href="/" className="flex items-center gap-3 group" onClick={close}>
-            <div className="flex items-center gap-3 transition-all duration-300 rounded-2xl">
-              <Image
-                src="/logodistsin.png"
-                alt="DISTRIESTHETIC Logo"
-                width={160}
-                height={60}
-                className="h-8 w-auto object-contain"
-                priority
-              />
-              <div className="hidden sm:block w-px h-5 bg-gray-200" />
-              <span className="hidden sm:block text-sm font-bold text-slate-700 tracking-tight">
-                DISTRIESTHETIC
-              </span>
-            </div>
+    <header className={`sticky top-0 z-50 w-full transition-all duration-500 ${
+      isScrolled ? "bg-white/90 backdrop-blur-lg shadow-sm py-3" : "bg-white py-5"
+    }`}>
+      <nav className="container mx-auto px-4 lg:px-8">
+        <div className="flex items-center justify-between">
+          
+          <Link href="/" className="flex items-center gap-3 shrink-0 transition-transform active:scale-95" onClick={close}>
+            <Image src="/logodistsin.png" alt="Logo" width={140} height={50} className="h-9 w-auto object-contain" priority />
+            <span className="hidden lg:block text-xs font-black text-slate-800 tracking-widest uppercase">Distriesthetic</span>
           </Link>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(link => {
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/50">
+            {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-200"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  className={`relative px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95 ${
+                    isActive ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
-                  {isActive && (
-                    <span className="inline-block w-1 h-1 rounded-full bg-blue-500 mr-1.5 mb-0.5" />
-                  )}
                   {link.label}
                 </Link>
               );
             })}
-
-            {/* Cart button — desktop */}
-            <Link
-              href="/carrito"
-              className={`relative ml-1 p-2 rounded-lg transition-all duration-200 ${
-                pathname === "/carrito"
-                  ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-              }`}
-              aria-label="Carrito de compras"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.6} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-              </svg>
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                  {itemCount > 99 ? "99+" : itemCount}
-                </span>
-              )}
-            </Link>
           </div>
 
-          {/* Cart button — mobile (always visible) */}
-          <Link
-            href="/carrito"
-            className="md:hidden relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150"
-            aria-label="Carrito de compras"
-            onClick={close}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.6} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-            </svg>
-            {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                {itemCount > 99 ? "99+" : itemCount}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex">
+              <CartIcon count={itemCount} isActive={pathname === "/carrito"} />
+            </div>
 
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150"
-            onClick={() => setOpen(prev => !prev)}
-            aria-expanded={open}
-            aria-label="Abrir menú de navegación"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              {open ? (
-                <path d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+            <button className="md:hidden p-2 rounded-xl bg-slate-50 text-slate-600 active:scale-90 transition-transform" onClick={() => setOpen(!open)}>
+              <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "rotate-45 translate-y-2" : ""}`} />
+                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "opacity-0" : ""}`} />
+                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
+              </div>
+            </button>
+          </div>
         </div>
 
-        {/* Mobile menu */}
-        {open && (
-          <div className="md:hidden border-t border-gray-100 bg-white py-3 pb-4">
-            <div className="flex flex-col gap-1">
-              {navLinks.map(link => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
+        {/* Mobile Menu - CORREGIDO */}
+        <div className={`md:hidden overflow-hidden transition-all duration-500 ${open ? "max-h-[500px] opacity-100 mt-4" : "max-h-0 opacity-0"}`}>
+          <div className="flex flex-col gap-2 pb-4">
+            {navLinks.map((link, index) => {
+              const isActive = pathname === link.href;
+              return (
+                <div
+                  key={link.href}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                  className={`flex items-center justify-between px-5 rounded-2xl transition-all duration-300 ${
+                    isActive ? "bg-blue-600 text-white shadow-lg translate-x-1" : "bg-slate-50 text-slate-600"
+                  }`}
+                >
+                  {/* Link del texto ocupa el espacio restante */}
+                  <Link 
+                    href={link.href} 
                     onClick={close}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                      isActive
-                        ? "bg-cyan-50 text-cyan-600"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
+                    className="flex-grow py-4 text-base font-bold active:scale-[0.98] transition-transform"
                   >
-                    {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 flex-shrink-0" />
-                    )}
                     {link.label}
                   </Link>
-                );
-              })}
-            </div>
+                  
+                  {/* CartIcon ahora es un hermano, no un hijo del Link anterior */}
+                  <div className="py-2">
+                    <CartIcon 
+                      count={itemCount} 
+                      isActive={pathname === "/carrito"} 
+                      inverted={isActive} 
+                      onClick={close} 
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+    </header>
   );
 }

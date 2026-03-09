@@ -1,5 +1,9 @@
-import React from 'react';
+"use client";
 
+import React from 'react';
+import { motion, Variants } from 'framer-motion';
+
+// --- Interfaces ---
 interface BenefitCard {
   icon: React.ReactNode;
   title: string;
@@ -9,6 +13,7 @@ interface BenefitCard {
   featured?: boolean;
 }
 
+// --- Iconos ---
 const ShieldCheckIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
@@ -51,51 +56,14 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
+// --- Datos ---
 const benefits: BenefitCard[] = [
-  {
-    icon: <ShieldCheckIcon />,
-    title: "Pago al recibir",
-    description: "Sin anticipos. Pagas cuando tienes el pedido en tus manos.",
-    badge: "Sin Riesgo",
-    color: 'emerald',
-    featured: true,
-  },
-  {
-    icon: <TruckIcon />,
-    title: "Entrega en menos de 24h",
-    description: "Envío gratuito en Bogotá con seguimiento en tiempo real.",
-    badge: "Gratis en Bogotá",
-    color: 'blue',
-  },
-  {
-    icon: <CertificateIcon />,
-    title: "Registro INVIMA vigente",
-    description: "Cada producto con registro sanitario activo y trazabilidad completa.",
-    badge: "Garantía Total",
-    color: 'violet',
-    featured: true,
-  },
-  {
-    icon: <ClipboardCheckIcon />,
-    title: "Control de calidad ISO",
-    description: "Proveedores certificados con auditoría por lote de producción.",
-    badge: "ISO 9001",
-    color: 'amber',
-  },
-  {
-    icon: <ClockIcon />,
-    title: "Pedidos 24/7",
-    description: "Plataforma siempre disponible. Soporte prioritario para profesionales.",
-    badge: "Siempre Disponible",
-    color: 'sky',
-  },
-  {
-    icon: <UserMdIcon />,
-    title: "Asesoría especializada",
-    description: "Expertos en insumos médicos disponibles para orientarte sin costo.",
-    badge: "Consultoría Gratuita",
-    color: 'rose',
-  },
+  { icon: <ShieldCheckIcon />, title: "Pago al recibir", description: "Sin anticipos. Pagas cuando tienes el pedido en tus manos.", badge: "Sin Riesgo", color: 'emerald', featured: true },
+  { icon: <TruckIcon />, title: "Entrega en menos de 24h", description: "Envío gratuito en Bogotá con seguimiento en tiempo real.", badge: "Gratis en Bogotá", color: 'blue' },
+  { icon: <CertificateIcon />, title: "Registro INVIMA vigente", description: "Cada producto con registro sanitario activo y trazabilidad completa.", badge: "Garantía Total", color: 'violet', featured: true },
+  { icon: <ClipboardCheckIcon />, title: "Control de calidad ISO", description: "Proveedores certificados con auditoría por lote de producción.", badge: "ISO 9001", color: 'amber' },
+  { icon: <ClockIcon />, title: "Pedidos 24/7", description: "Plataforma siempre disponible. Soporte prioritario para profesionales.", badge: "Siempre Disponible", color: 'sky' },
+  { icon: <UserMdIcon />, title: "Asesoría especializada", description: "Expertos en insumos médicos disponibles para orientarte sin costo.", badge: "Consultoría Gratuita", color: 'rose' },
 ];
 
 const certifications = [
@@ -105,117 +73,158 @@ const certifications = [
   { label: 'GMP', sublabel: 'Good Manufacturing' },
 ];
 
+// --- Animaciones ---
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
 export default function BenefitsSection() {
   const colorMap: Record<string, { bg: string; text: string; light: string; border: string }> = {
-    blue:    { bg: 'from-blue-500 to-blue-400',       text: 'text-blue-700',    light: 'bg-blue-50',    border: 'border-blue-200' },
-    emerald: { bg: 'from-emerald-500 to-emerald-400', text: 'text-emerald-700', light: 'bg-emerald-50', border: 'border-emerald-200' },
-    violet:  { bg: 'from-violet-500 to-violet-400',   text: 'text-violet-700',  light: 'bg-violet-50',  border: 'border-violet-200' },
-    amber:   { bg: 'from-amber-500 to-amber-400',     text: 'text-amber-700',   light: 'bg-amber-50',   border: 'border-amber-200' },
-    sky:     { bg: 'from-sky-500 to-sky-400',         text: 'text-sky-700',     light: 'bg-sky-50',     border: 'border-sky-200' },
-    rose:    { bg: 'from-rose-500 to-rose-400',       text: 'text-rose-700',    light: 'bg-rose-50',    border: 'border-rose-200' },
+    blue:    { bg: 'bg-blue-600',       text: 'text-blue-700',    light: 'bg-blue-50',    border: 'border-blue-200' },
+    emerald: { bg: 'bg-emerald-600',    text: 'text-emerald-700', light: 'bg-emerald-50', border: 'border-emerald-200' },
+    violet:  { bg: 'bg-violet-600',     text: 'text-violet-700',  light: 'bg-violet-50',  border: 'border-violet-200' },
+    amber:   { bg: 'bg-amber-600',      text: 'text-amber-700',   light: 'bg-amber-50',   border: 'border-amber-200' },
+    sky:     { bg: 'bg-sky-600',        text: 'text-sky-700',     light: 'bg-sky-50',     border: 'border-sky-200' },
+    rose:    { bg: 'bg-rose-600',       text: 'text-rose-700',    light: 'bg-rose-50',    border: 'border-rose-200' },
   };
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-24 bg-white overflow-hidden">
       <div className="container mx-auto px-4">
 
-        {/* Header — alineado a la izquierda, más directo */}
-        <div className="max-w-2xl mb-14">
-          <p className="text-blue-600 text-xs font-semibold uppercase tracking-widest mb-3">
+        {/* Header Animado */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="max-w-2xl mb-16"
+        >
+          <p className="text-blue-600 text-xs font-bold uppercase tracking-[0.2em] mb-4">
             Por qué elegirnos
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 leading-[1.15] mb-6">
             Insumos médicos con la garantía que tu práctica necesita
           </h2>
-          <p className="text-gray-500 text-lg">
-            Más de 500 clínicas y consultorios en Colombia confían en nuestra cadena de suministro certificada.
+          <p className="text-slate-500 text-lg leading-relaxed">
+            Más de <span className="text-slate-900 font-semibold">500 clínicas y consultorios</span> en Colombia confían en nuestra cadena de suministro certificada.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Benefits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Benefits Grid Animado */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {benefits.map((benefit, index) => {
             const color = colorMap[benefit.color] || colorMap.blue;
             return (
-              <div
+              <motion.div
                 key={index}
-                className={`group relative bg-white rounded-2xl p-7 border transition-all duration-300 hover:shadow-lg ${
+                variants={itemVariants}
+                className={`group relative bg-white rounded-2xl p-8 border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                   benefit.featured
                     ? `${color.border} ${color.light} border-2`
-                    : 'border-gray-100 shadow-sm hover:border-gray-200'
+                    : 'border-slate-100 shadow-sm hover:border-slate-200'
                 }`}
               >
                 {benefit.featured && (
-                  <span className={`absolute top-4 right-4 text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${color.border} ${color.text} bg-white`}>
+                  <span className={`absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${color.border} ${color.text} bg-white shadow-sm`}>
                     Destacado
                   </span>
                 )}
 
-                {/* Icon */}
-                <div className={`w-12 h-12 bg-gradient-to-br ${color.bg} rounded-xl flex items-center justify-center mb-5 text-white group-hover:scale-105 transition-transform duration-200`}>
+                <div className={`w-12 h-12 ${color.bg} rounded-xl flex items-center justify-center mb-6 text-white shadow-lg`}>
                   {benefit.icon}
                 </div>
 
-                {/* Content */}
-                <h3 className="text-base font-bold text-gray-900 mb-1.5">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
                   {benefit.title}
                 </h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-5">
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">
                   {benefit.description}
                 </p>
 
-                {/* Badge */}
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${color.light} ${color.text}`}>
+                <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold ${color.light} ${color.text} border ${color.border}`}>
                   {benefit.badge}
                 </span>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
-        {/* Certifications — más peso visual, integradas horizontalmente */}
-        <div className="mt-14 pt-10 border-t border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="max-w-xs">
-              <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Certificaciones activas</p>
-              <p className="text-gray-600 text-sm font-medium leading-relaxed">
+        {/* Certifications Footer Animado */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          className="mt-16 pt-12 border-t border-slate-100"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+            <div className="max-w-md">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2">Certificaciones activas</p>
+              <p className="text-slate-600 text-sm font-medium leading-relaxed">
                 Operamos bajo los más altos estándares regulatorios del sector salud en Colombia.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               {certifications.map((cert, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center justify-center w-24 h-20 rounded-xl border border-gray-200 bg-gray-50 hover:border-blue-300 hover:bg-blue-50 transition-colors duration-200 cursor-default"
-                >
-                  <span className="text-blue-700 font-bold text-sm">{cert.label}</span>
-                  <span className="text-gray-400 text-xs text-center mt-1 leading-tight px-1">{cert.sublabel}</span>
+                <div key={i} className="flex flex-col items-center justify-center w-28 h-20 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200">
+                  <span className="text-blue-700 font-extrabold text-sm tracking-tighter">{cert.label}</span>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold text-center mt-1">{cert.sublabel}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* CTA Banner */}
-        <div className="mt-12 bg-blue-600 rounded-2xl px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-white text-xl font-bold mb-1">
-              ¿Listo para optimizar tus compras de insumos?
-            </h3>
-            <p className="text-blue-200 text-sm">
-              Un asesor especializado te contacta en menos de 2 horas.
-            </p>
+        {/* CTA Banner Mejorado */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mt-20 relative bg-slate-900 rounded-[2rem] p-8 md:p-12 overflow-hidden shadow-2xl"
+        >
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+          
+          <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="text-center lg:text-left">
+              <h3 className="text-white text-2xl md:text-3xl font-bold mb-3 tracking-tight">
+                ¿Listo para optimizar tus compras de insumos?
+              </h3>
+              <p className="text-slate-400 text-lg max-w-xl">
+                Únete a los profesionales que ya ahorran tiempo y dinero con nuestro sistema de entrega prioritaria.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <button className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-bold px-8 py-4 rounded-2xl hover:bg-blue-500 transition-all duration-300 shadow-lg shadow-blue-600/20 active:scale-95 text-base whitespace-nowrap">
+                Ver catálogo
+                <ArrowRightIcon />
+              </button>
+              <button className="inline-flex items-center justify-center bg-transparent border border-slate-700 text-white font-bold px-8 py-4 rounded-2xl hover:bg-slate-800 transition-all duration-300 active:scale-95 text-base whitespace-nowrap">
+                Hablar con un asesor
+              </button>
+            </div>
           </div>
-          <div className="flex gap-3 flex-shrink-0">
-            <button className="inline-flex items-center gap-2 bg-white text-blue-600 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors duration-200 text-sm whitespace-nowrap">
-              Ver catálogo
-              <ArrowRightIcon />
-            </button>
-            <button className="inline-flex items-center border border-blue-400 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-500 transition-colors duration-200 text-sm whitespace-nowrap">
-              Hablar con un asesor
-            </button>
-          </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>
