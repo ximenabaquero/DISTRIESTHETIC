@@ -6,7 +6,7 @@ import Link from "next/link";
 const faqs = [
   {
     q: "¿Hacen envíos a todo Colombia?",
-    a: "Sí, despachamos a todo el territorio nacional. Bogotá: 1–2 días hábiles. Principales ciudades: 2–3 días. Resto del país: 3–5 días hábiles.",
+    a: "Sí, despachamos a todo el territorio nacional mediante servicios de mensajería. Actualmente atendemos Bogotá, Medellín, Cali, Zipaquirá, Cajicá, Puerto Boyacá y más. Bogotá: 1–2 días hábiles. Principales ciudades: 2–3 días. Resto del país: 3–5 días hábiles.",
     gradient: "from-[#1a6cf6] to-[#00c8a0]",
     icon: (
       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

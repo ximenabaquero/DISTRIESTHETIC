@@ -1,6 +1,7 @@
 import { SiteNav } from "@/components/SiteNav";
 import HeroSection from "./components/index/HeroSection";
 import BenefitsSection from "./components/index/BenefitsSection";
+import MisionVisionSection from "./components/index/MisionVisionSection";
 import Footer from "./components/index/Footer";
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
       <SiteNav />
       <HeroSection />
       <BenefitsSection />
+      <MisionVisionSection />
       <Footer />
     </div>
   );

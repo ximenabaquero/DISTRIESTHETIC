@@ -53,6 +53,28 @@
   stroke-dashoffset: 2000;
   animation: ekgDraw 3.5s ease-out forwards 0.8s;
 }
+
+/* Efecto brillo diagonal en tarjetas */
+@keyframes sheenDiagonal {
+  from { transform: translateX(-100%) skewX(-20deg); }
+  to   { transform: translateX(300%) skewX(-20deg); }
+}
+.card-sheen { position: relative; }
+.card-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  pointer-events: none;
+  z-index: 20;
+  transform: translateX(-100%) skewX(-20deg);
+}
+.card-sheen:hover::after,
+.card-sheen:active::after {
+  animation: sheenDiagonal 0.65s ease-in-out forwards;
+}
 @import "tailwindcss";
 
 :root {
