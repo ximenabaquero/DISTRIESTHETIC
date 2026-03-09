@@ -46,7 +46,7 @@ const socialLinks = [
 ];
 
 export default function Footer() {
-  const { telefono, whatsapp } = useContactInfo();
+  const { telefono, whatsapp, email } = useContactInfo();
 
   return (
     <footer className="relative bg-[#0B0F1A] text-white overflow-hidden">
@@ -133,13 +133,15 @@ export default function Footer() {
                   <span className="text-lg font-medium text-slate-200">+57 {telefono}</span>
                 </a>
                 
-                <a 
-                  href="mailto:info@distriesthetic.com"
-                  className="flex flex-col group"
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase mb-1 group-hover:text-blue-500 transition-colors">Correo oficial</span>
-                  <span className="text-lg font-medium text-slate-200">info@distriesthetic.com</span>
-                </a>
+                {email && (
+                  <a 
+                    href={`mailto:${email}`}
+                    className="flex flex-col group"
+                  >
+                    <span className="text-[10px] font-bold text-slate-500 uppercase mb-1 group-hover:text-blue-500 transition-colors">Correo oficial</span>
+                    <span className="text-lg font-medium text-slate-200">{email}</span>
+                  </a>
+                )}
               </div>
             </div>
 

@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 export interface ContactInfo {
   telefono: string;
   whatsapp: string;
+  email: string;
 }
 
-// Número de fallback mientras carga o si falla el fetch
+// Datos de fallback mientras carga o si falla el fetch
 export const DEFAULT_WHATSAPP = "573046831493";
 export const DEFAULT_TELEFONO = "304 683 1493";
+export const DEFAULT_EMAIL = "";
 
 // Caché a nivel de módulo: un solo fetch por sesión del navegador
 let cached: ContactInfo | null = null;
@@ -32,7 +34,7 @@ function fetchContactInfo(): Promise<ContactInfo | null> {
 
 export function useContactInfo(): ContactInfo {
   const [info, setInfo] = useState<ContactInfo>(() =>
-    cached ?? { telefono: DEFAULT_TELEFONO, whatsapp: DEFAULT_WHATSAPP },
+    cached ?? { telefono: DEFAULT_TELEFONO, whatsapp: DEFAULT_WHATSAPP, email: DEFAULT_EMAIL },
   );
 
   useEffect(() => {
