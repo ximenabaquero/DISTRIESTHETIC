@@ -9,7 +9,7 @@ function isPromise<T>(value: unknown): value is Promise<T> {
   return typeof value === 'object' && value !== null && typeof (value as Promise<T>).then === 'function';
 }
 
-const VALID_ESTADOS: PedidoEstado[] = ['pendiente', 'pagado', 'cancelado'];
+const VALID_ESTADOS: PedidoEstado[] = ['sin_entregar', 'entregado', 'cancelado'];
 
 export async function PATCH(request: Request, context: RouteParams) {
   if (!(await requireAdmin())) {
@@ -29,10 +29,10 @@ export async function PATCH(request: Request, context: RouteParams) {
     return NextResponse.json({ ok: false, error: 'Estado inválido.' }, { status: 400 });
   }
 
-  // Si se está marcando como pagado, decrementar stock (solo si estaba pendiente)
-  if (estado === 'pagado') {
+  // Si se está marcando como entregado, decrementar stock (solo si estaba sin_entregar)
+  if (estado === 'entregado') {
     const pedidoActual = await getPedidoById(id);
-    if (pedidoActual && pedidoActual.estado !== 'pagado') {
+    if (pedidoActual && pedidoActual.estado !== 'entregado') {
       await decrementarStock(
         pedidoActual.items
           .filter(item => item.id && item.cantidad > 0)
