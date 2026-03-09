@@ -15,20 +15,20 @@ export default function WhatsAppCard({ whatsapp, telefono }: Props) {
   )}`;
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+    <div className="bg-[#0f1f35] border border-white/[0.08] rounded-xl p-6">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
           {WA_ICON}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bold text-green-900">WhatsApp directo</h3>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200 text-xs font-semibold text-green-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <h3 className="font-bold text-white">WhatsApp directo</h3>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/25 text-xs font-semibold text-green-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               Respuesta en &lt; 2 h
             </span>
           </div>
-          <p className="text-sm text-green-700 mt-0.5 mb-3">
+          <p className="text-sm text-slate-400 mt-0.5 mb-3">
             Habla directamente con nuestro equipo de ventas
           </p>
           <a
@@ -40,7 +40,7 @@ export default function WhatsAppCard({ whatsapp, telefono }: Props) {
             {WA_ICON}
             Chatear ahora
           </a>
-          <p className="text-xs text-green-600 mt-2">{telefono}</p>
+          <p className="text-xs text-slate-500 mt-2">{telefono}</p>
         </div>
       </div>
     </div>

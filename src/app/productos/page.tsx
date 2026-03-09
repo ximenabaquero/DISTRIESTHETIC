@@ -158,7 +158,7 @@ function ProductosContent() {
   }, [searchTerm, selectedCategory, sortBy, data]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#0b1221]">
       <SiteNav />
 
       <div className="container mx-auto px-4 sm:px-6 py-10">
@@ -169,20 +169,20 @@ function ProductosContent() {
             DISTRIESTHETIC
           </p>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Catálogo de Productos</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-3xl font-bold text-white">Catálogo de Productos</h1>
+            <p className="text-slate-400 mt-1">
               Insumos médicos con registro INVIMA y garantía de calidad
             </p>
           </div>
         </div>
 
         {/* Search + filters */}
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-5 mb-8">
+        <div className="bg-[#1a2845] border border-white/[0.10] rounded-2xl p-5 mb-8">
 
           {/* Search input */}
           <div className="relative mb-4">
             <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -192,12 +192,12 @@ function ProductosContent() {
               placeholder="Buscar por nombre o descripción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:bg-white transition-all"
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-[#0b1221] border border-white/[0.08] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -213,11 +213,11 @@ function ProductosContent() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 !selectedCategory
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  : "bg-white/[0.06] text-slate-300 hover:bg-white/[0.10]"
               }`}
             >
               Todos
-              <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${!selectedCategory ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${!selectedCategory ? "bg-blue-500 text-white" : "bg-white/[0.08] text-slate-400"}`}>
                 {data.length}
               </span>
             </button>
@@ -228,12 +228,12 @@ function ProductosContent() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                   selectedCategory === cat.id
                     ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-white/[0.06] text-slate-300 hover:bg-white/[0.10]"
                 }`}
               >
                 {cat.icon}
                 {cat.label}
-                <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${selectedCategory === cat.id ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${selectedCategory === cat.id ? "bg-blue-500 text-white" : "bg-white/[0.08] text-slate-400"}`}>
                   {cat.count}
                 </span>
               </button>
@@ -241,14 +241,14 @@ function ProductosContent() {
           </div>
 
           {/* Sort */}
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-400 flex-shrink-0">
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/[0.08]">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-500 flex-shrink-0">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
             </svg>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="text-sm text-gray-600 bg-transparent border-none outline-none cursor-pointer hover:text-gray-900 transition-colors"
+              className="text-sm text-slate-400 bg-transparent border-none outline-none cursor-pointer hover:text-white transition-colors [&>option]:bg-[#111c30] [&>option]:text-white"
             >
               <option value="">Ordenar: relevancia</option>
               <option value="precio-asc">Precio: menor a mayor</option>
@@ -260,12 +260,12 @@ function ProductosContent() {
 
           {/* Result count */}
           {(searchTerm || selectedCategory) && (
-            <p className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
+            <p className="mt-4 pt-4 border-t border-white/[0.08] text-sm text-slate-400">
               {productosFiltrados.length === 0
                 ? "Sin resultados"
                 : `${productosFiltrados.length} de ${data.length} productos`}
               {searchTerm && (
-                <span className="ml-1">para <span className="font-medium text-gray-700">&quot;{searchTerm}&quot;</span></span>
+                <span className="ml-1">para <span className="font-medium text-slate-200">&quot;{searchTerm}&quot;</span></span>
               )}
             </p>
           )}
@@ -275,17 +275,17 @@ function ProductosContent() {
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
-                <div className="h-40 bg-gray-100 rounded-xl mb-4" />
+              <div key={i} className="bg-[#1a2845] rounded-2xl p-6 border border-white/[0.10] animate-pulse">
+                <div className="h-40 bg-white/[0.06] rounded-xl mb-4" />
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl" />
-                  <div className="w-16 h-5 bg-gray-100 rounded-full" />
+                  <div className="w-10 h-10 bg-white/[0.06] rounded-xl" />
+                  <div className="w-16 h-5 bg-white/[0.06] rounded-full" />
                 </div>
-                <div className="h-5 bg-gray-100 rounded-lg mb-2 w-3/4" />
-                <div className="h-4 bg-gray-100 rounded-lg mb-4 w-full" />
-                <div className="h-4 bg-gray-100 rounded-lg mb-4 w-1/2" />
-                <div className="h-9 bg-gray-100 rounded-xl mb-3" />
-                <div className="h-5 bg-gray-100 rounded-lg w-2/3" />
+                <div className="h-5 bg-white/[0.06] rounded-lg mb-2 w-3/4" />
+                <div className="h-4 bg-white/[0.06] rounded-lg mb-4 w-full" />
+                <div className="h-4 bg-white/[0.06] rounded-lg mb-4 w-1/2" />
+                <div className="h-9 bg-white/[0.06] rounded-xl mb-3" />
+                <div className="h-5 bg-white/[0.06] rounded-lg w-2/3" />
               </div>
             ))}
           </div>
@@ -306,14 +306,14 @@ function ProductosContent() {
           </div>
         ) : (
           /* Empty state */
-          <div className="bg-white border border-gray-100 rounded-2xl p-12 text-center">
-            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-[#1a2845] border border-white/[0.10] rounded-2xl p-12 text-center">
+            <div className="w-12 h-12 bg-white/[0.06] rounded-xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-1">Sin resultados</h2>
-            <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+            <h2 className="text-lg font-semibold text-white mb-1">Sin resultados</h2>
+            <p className="text-sm text-slate-400 mb-6 max-w-xs mx-auto">
               No hay productos que coincidan con <span className="font-medium">&quot;{searchTerm}&quot;</span>.
               Intenta con otros términos.
             </p>
@@ -354,7 +354,7 @@ function ProductosContent() {
 export default function ProductosPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0b1221] flex items-center justify-center">
         <svg className="w-5 h-5 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { type Producto, productosBase } from '@/data/productos';
 import type { Pedido, PedidoEstado } from '@/lib/pedidosStore';
+import type { MensajeContacto } from '../MensajesView';
 
 interface ProductoEditable extends Producto { dirty?: boolean; isExtra?: boolean }
 interface ProductEditPayload {
@@ -30,6 +31,10 @@ export function useAdmin() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const [updatingPedidoId, setUpdatingPedidoId] = useState<number | null>(null);
+  const [mensajes, setMensajes] = useState<MensajeContacto[]>([]);
+  const [loadingMensajes, setLoadingMensajes] = useState(false);
+  const [deletingMensajeId, setDeletingMensajeId] = useState<number | null>(null);
+  const [updatingMensajeId, setUpdatingMensajeId] = useState<number | null>(null);
 
   const baseProductsSet = useMemo(() => new Set(productosBase.map(p => p.id)), []);
 
@@ -105,6 +110,19 @@ export function useAdmin() {
     };
     fetchAll();
     fetchPedidos();
+    const fetchMensajes = async () => {
+      setLoadingMensajes(true);
+      try {
+        const res = await fetch('/api/admin/mensajes');
+        const json = await res.json();
+        if (json.ok) setMensajes(json.mensajes);
+      } catch (error) {
+        console.error('Error cargando mensajes', error);
+      } finally {
+        setLoadingMensajes(false);
+      }
+    };
+    fetchMensajes();
   }, [isAdmin, baseProductsSet]);
 
   const categories = useMemo(
@@ -299,6 +317,39 @@ export function useAdmin() {
     }
   }, []);
 
+  const handleMarcarMensajeLeido = useCallback(async (id: number, leido: boolean) => {
+    setUpdatingMensajeId(id);
+    try {
+      const res = await fetch('/api/admin/mensajes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, leido }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error);
+      setMensajes(prev => prev.map(m => m.id === id ? { ...m, leido } : m));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error actualizando mensaje');
+    } finally {
+      setUpdatingMensajeId(null);
+    }
+  }, []);
+
+  const handleEliminarMensaje = useCallback(async (id: number) => {
+    if (!confirm('¿Eliminar este mensaje? No se puede deshacer.')) return;
+    setDeletingMensajeId(id);
+    try {
+      const res = await fetch(`/api/admin/mensajes?id=${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error);
+      setMensajes(prev => prev.filter(m => m.id !== id));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error eliminando mensaje');
+    } finally {
+      setDeletingMensajeId(null);
+    }
+  }, []);
+
   // ──────────────────────────────────────────────────────────────
   // Auth: login y logout via API (cookie HTTP-only)
   // ──────────────────────────────────────────────────────────────
@@ -380,6 +431,10 @@ export function useAdmin() {
     pedidos,
     loadingPedidos,
     updatingPedidoId,
+    mensajes,
+    loadingMensajes,
+    deletingMensajeId,
+    updatingMensajeId,
     visibleProductos,
     hasDirty,
     loggedIn,
@@ -399,6 +454,8 @@ export function useAdmin() {
     removeProductoImagen,
     handleDeleteProducto,
     handleUpdatePedidoEstado,
+    handleMarcarMensajeLeido,
+    handleEliminarMensaje,
     saveAll,
     handleLogin,
     handleLogout,

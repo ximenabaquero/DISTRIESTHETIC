@@ -24,16 +24,15 @@ const CartIcon = ({ count, isActive, inverted, onClick }: CartIconProps) => (
   <Link
     href="/carrito"
     onClick={(e) => {
-      // Evitamos que el click afecte a elementos padre si los hubiera
       e.stopPropagation();
       onClick?.();
     }}
     className={`relative inline-flex items-center justify-center p-2 rounded-xl transition-all duration-300 active:scale-90 ${
-      inverted 
-        ? "text-white hover:bg-white/20" 
+      inverted
+        ? "text-white hover:bg-white/15"
         : isActive
           ? "bg-blue-600 text-white shadow-md"
-          : "text-slate-600 hover:bg-slate-100"
+          : "text-slate-500 hover:bg-slate-100"
     }`}
   >
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
@@ -64,51 +63,77 @@ export function SiteNav() {
   const close = () => setOpen(false);
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-all duration-500 ${
-      isScrolled ? "bg-white/90 backdrop-blur-lg shadow-sm py-3" : "bg-white py-5"
-    }`}>
+    <header
+      className="sticky top-0 z-50 w-full transition-all duration-300"
+      style={{
+        height: 64,
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        background: isScrolled ? "rgba(255,255,255,0.95)" : "#07091C",
+        borderBottom: isScrolled ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(240,244,255,0.06)",
+        boxShadow: isScrolled ? "0 1px 12px rgba(0,0,0,0.07)" : "none",
+      }}
+    >
       <nav className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between">
-          
+
+          {/* Logo — más grande, letra-spacing, acento de color */}
           <Link href="/" className="flex items-center gap-3 shrink-0 transition-transform active:scale-95" onClick={close}>
-            <Image src="/logodistsin.png" alt="Logo" width={140} height={50} className="h-9 w-auto object-contain" priority />
-            <span className="hidden lg:block text-xs font-black text-slate-800 tracking-widest uppercase">Distriesthetic</span>
+            <Image src="/logodistsin.png" alt="Logo" width={160} height={58} className="h-11 w-auto object-contain" priority />
+            <span className="hidden lg:block text-sm font-black tracking-[0.28em] uppercase leading-none">
+              <span className={isScrolled ? "text-slate-800" : "text-white"}>DISTRI</span>
+              <span className={isScrolled ? "text-blue-600" : "text-sky-400"}>ESTHETIC</span>
+            </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/50">
+          {/* Desktop Nav — subrayado activo + carrito dentro del grupo */}
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95 ${
-                    isActive ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                  className={`relative px-4 py-2 text-sm font-semibold transition-all duration-300 active:scale-95 ${
+                    isScrolled
+                      ? isActive
+                        ? "text-blue-600"
+                        : "text-slate-500 hover:text-slate-900"
+                      : isActive
+                        ? "text-white"
+                        : "text-slate-300 hover:text-white"
                   }`}
                 >
                   {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-blue-500 rounded-full" />
+                  )}
                 </Link>
               );
             })}
-          </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex">
-              <CartIcon count={itemCount} isActive={pathname === "/carrito"} />
+            {/* Carrito dentro del navbar con separador */}
+            <div className={`ml-2 pl-3 border-l ${isScrolled ? "border-slate-200" : "border-white/15"}`}>
+              <CartIcon count={itemCount} isActive={pathname === "/carrito"} inverted={!isScrolled} />
             </div>
-
-            <button className="md:hidden p-2 rounded-xl bg-slate-50 text-slate-600 active:scale-90 transition-transform" onClick={() => setOpen(!open)}>
-              <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
-                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "rotate-45 translate-y-2" : ""}`} />
-                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "opacity-0" : ""}`} />
-                <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
-              </div>
-            </button>
           </div>
+
+          {/* Hamburger móvil */}
+          <button
+            className={`md:hidden p-2 rounded-xl active:scale-90 transition-transform ${
+              isScrolled ? "bg-slate-50 text-slate-600" : "bg-white/10 text-white"
+            }`}
+            onClick={() => setOpen(!open)}
+          >
+            <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+              <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "rotate-45 translate-y-2" : ""}`} />
+              <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "opacity-0" : ""}`} />
+              <span className={`block w-5 h-0.5 bg-current transition-all duration-300 ${open ? "-rotate-45 -translate-y-2" : ""}`} />
+            </div>
+          </button>
         </div>
 
-        {/* Mobile Menu - CORREGIDO */}
+        {/* Mobile Menu */}
         <div className={`md:hidden overflow-hidden transition-all duration-500 ${open ? "max-h-[500px] opacity-100 mt-4" : "max-h-0 opacity-0"}`}>
           <div className="flex flex-col gap-2 pb-4">
             {navLinks.map((link, index) => {
@@ -118,25 +143,26 @@ export function SiteNav() {
                   key={link.href}
                   style={{ transitionDelay: `${index * 50}ms` }}
                   className={`flex items-center justify-between px-5 rounded-2xl transition-all duration-300 ${
-                    isActive ? "bg-blue-600 text-white shadow-lg translate-x-1" : "bg-slate-50 text-slate-600"
+                    isActive
+                      ? "bg-blue-600 text-white shadow-lg translate-x-1"
+                      : isScrolled
+                        ? "bg-slate-50 text-slate-600"
+                        : "bg-white/[0.08] text-slate-200 border border-white/10"
                   }`}
                 >
-                  {/* Link del texto ocupa el espacio restante */}
-                  <Link 
-                    href={link.href} 
+                  <Link
+                    href={link.href}
                     onClick={close}
                     className="flex-grow py-4 text-base font-bold active:scale-[0.98] transition-transform"
                   >
                     {link.label}
                   </Link>
-                  
-                  {/* CartIcon ahora es un hermano, no un hijo del Link anterior */}
                   <div className="py-2">
-                    <CartIcon 
-                      count={itemCount} 
-                      isActive={pathname === "/carrito"} 
-                      inverted={isActive} 
-                      onClick={close} 
+                    <CartIcon
+                      count={itemCount}
+                      isActive={pathname === "/carrito"}
+                      inverted={isActive || !isScrolled}
+                      onClick={close}
                     />
                   </div>
                 </div>

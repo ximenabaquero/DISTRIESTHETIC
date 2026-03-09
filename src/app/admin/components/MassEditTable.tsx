@@ -39,7 +39,7 @@ export default function MassEditTable({
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow">
       <table className="min-w-full text-sm">
-        <thead className="bg-blue-600 text-white">
+        <thead className="bg-[#1e2d4a] text-white">
           <tr>
             <th className="px-3 py-2 text-left">ID</th>
             <th className="px-3 py-2 text-left">Nombre</th>
@@ -52,8 +52,8 @@ export default function MassEditTable({
           </tr>
         </thead>
         <tbody>
-          {productos.map(p => (
-            <tr key={p.id} className={p.dirty ? 'bg-orange-50 border-l-4 border-orange-400' : 'border-l-4 border-transparent'}>
+          {productos.map((p, rowIdx) => (
+            <tr key={p.id} className={p.dirty ? 'bg-orange-50 border-l-4 border-orange-400' : `border-l-4 border-transparent ${rowIdx % 2 === 1 ? 'bg-[#f8f9fc]' : 'bg-white'}`}>
               <td className="px-3 py-2 font-mono text-xs text-slate-800 font-semibold">{p.id}</td>
               <td className="px-3 py-2 whitespace-pre-wrap max-w-xs text-slate-900 font-medium">{p.nombre}</td>
               <td className="px-3 py-2 text-center text-slate-800">{p.categoria}</td>
@@ -72,31 +72,53 @@ export default function MassEditTable({
                       Sin imagen
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <label className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700">
-                      <span>{uploadingImageId === p.id ? 'Subiendo...' : 'Cambiar'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            onUploadImage(p.id, file);
-                          }
-                          e.target.value = '';
-                        }}
-                        disabled={uploadingImageId === p.id || removingImageId === p.id}
-                      />
+                  <div className="flex gap-1.5 items-center justify-center mt-1">
+                    {/* Cambiar imagen */}
+                    <label
+                      title="Cambiar imagen"
+                      className={`cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                        (uploadingImageId === p.id || removingImageId === p.id)
+                          ? 'opacity-40 pointer-events-none bg-gray-50 border-gray-200 text-gray-400'
+                          : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
+                      }`}
+                    >
+                      {uploadingImageId === p.id ? (
+                        <>
+                          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                          </svg>
+                          Subiendo
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                          </svg>
+                          Cambiar
+                        </>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (file) onUploadImage(p.id, file); e.target.value = ''; }} disabled={uploadingImageId === p.id || removingImageId === p.id}/>
                     </label>
+                    {/* Quitar imagen */}
                     {p.imagenUrl && (
                       <button
                         type="button"
+                        title="Quitar imagen"
                         onClick={() => onRemoveImage(p.id)}
                         disabled={removingImageId === p.id || uploadingImageId === p.id}
-                        className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 hover:border-red-300 hover:text-red-600 transition-colors disabled:opacity-40"
                       >
-                        {removingImageId === p.id ? 'Eliminando...' : 'Quitar'}
+                        {removingImageId === p.id ? (
+                          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        )}
                       </button>
                     )}
                   </div>
@@ -116,7 +138,7 @@ export default function MassEditTable({
                   className={`w-20 border rounded px-2 py-1 text-right font-semibold transition-colors ${
                     p.stock === 0
                       ? 'bg-red-50 border-red-200 text-red-700'
-                      : p.stock <= 5
+                      : p.stock > 0 && p.stock < 10
                       ? 'bg-amber-50 border-amber-200 text-amber-700'
                       : 'border-gray-200 text-slate-900'
                   }`}
@@ -138,26 +160,48 @@ export default function MassEditTable({
                 </div>
               </td>
               <td className="px-3 py-2">
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-1">
+                  {/* Editar */}
                   <button
                     type="button"
+                    title="Editar producto"
                     onClick={() => onEdit(p)}
                     disabled={updating || deletingId === p.id}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-60"
+                    className="flex items-center justify-center w-7 h-7 rounded text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-40"
                   >
-                    {updating && editingId === p.id ? 'Actualizando...' : 'Editar'}
+                    {updating && editingId === p.id ? (
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                    )}
                   </button>
+                  {/* Eliminar (solo productos extra) */}
                   {p.isExtra ? (
                     <button
                       type="button"
+                      title="Eliminar producto"
                       onClick={() => onDelete(p.id)}
                       disabled={deletingId === p.id || updating}
-                      className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-60"
+                      className="flex items-center justify-center w-7 h-7 rounded text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40"
                     >
-                      {deletingId === p.id ? 'Eliminando...' : 'Eliminar'}
+                      {deletingId === p.id ? (
+                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      )}
                     </button>
                   ) : (
-                    <span className="text-xs text-gray-400">—</span>
+                    <div className="w-7 h-7" />
                   )}
                 </div>
               </td>

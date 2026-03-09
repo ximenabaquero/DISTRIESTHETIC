@@ -19,69 +19,69 @@ const colorMap: Record<string, {
 }> = {
   // Medicamentos — azul clásico (salud/farmacia)
   blue: {
-    card: "from-white to-blue-50",
-    border: "border-blue-300",
-    badge: "bg-blue-100",
-    badgeText: "text-blue-700",
-    placeholder: "border-blue-200",
-    placeholderText: "text-blue-500",
-    tag: "bg-blue-50",
-    tagText: "text-blue-700",
+    card: "",
+    border: "border-blue-500",
+    badge: "bg-blue-500/20",
+    badgeText: "text-blue-300",
+    placeholder: "border-blue-500/30",
+    placeholderText: "text-blue-400",
+    tag: "bg-blue-500/15",
+    tagText: "text-blue-300",
   },
-  // Soluciones — verde agua (líquidos/sueros)
+  // Soluciones — verde agua
   teal: {
-    card: "from-white to-teal-50",
-    border: "border-teal-300",
-    badge: "bg-teal-100",
-    badgeText: "text-teal-700",
-    placeholder: "border-teal-200",
-    placeholderText: "text-teal-500",
-    tag: "bg-teal-50",
-    tagText: "text-teal-700",
+    card: "",
+    border: "border-teal-500",
+    badge: "bg-teal-500/20",
+    badgeText: "text-teal-300",
+    placeholder: "border-teal-500/30",
+    placeholderText: "text-teal-400",
+    tag: "bg-teal-500/15",
+    tagText: "text-teal-300",
   },
-  // Insumos — violeta (suministros médicos)
+  // Insumos — violeta
   violet: {
-    card: "from-white to-violet-50",
-    border: "border-violet-300",
-    badge: "bg-violet-100",
-    badgeText: "text-violet-700",
-    placeholder: "border-violet-200",
-    placeholderText: "text-violet-500",
-    tag: "bg-violet-50",
-    tagText: "text-violet-700",
+    card: "",
+    border: "border-violet-500",
+    badge: "bg-violet-500/20",
+    badgeText: "text-violet-300",
+    placeholder: "border-violet-500/30",
+    placeholderText: "text-violet-400",
+    tag: "bg-violet-500/15",
+    tagText: "text-violet-300",
   },
-  // Químicos — ámbar (precaución/reacciones)
+  // Químicos — ámbar
   amber: {
-    card: "from-white to-amber-50",
-    border: "border-amber-300",
-    badge: "bg-amber-100",
-    badgeText: "text-amber-700",
-    placeholder: "border-amber-200",
-    placeholderText: "text-amber-500",
-    tag: "bg-amber-50",
-    tagText: "text-amber-700",
+    card: "",
+    border: "border-amber-500",
+    badge: "bg-amber-500/20",
+    badgeText: "text-amber-300",
+    placeholder: "border-amber-500/30",
+    placeholderText: "text-amber-400",
+    tag: "bg-amber-500/15",
+    tagText: "text-amber-300",
   },
-  // Ropa — rosa (moda/indumentaria)
+  // Ropa — rosa
   rose: {
-    card: "from-white to-rose-50",
-    border: "border-rose-300",
-    badge: "bg-rose-100",
-    badgeText: "text-rose-700",
-    placeholder: "border-rose-200",
-    placeholderText: "text-rose-500",
-    tag: "bg-rose-50",
-    tagText: "text-rose-700",
+    card: "",
+    border: "border-rose-500",
+    badge: "bg-rose-500/20",
+    badgeText: "text-rose-300",
+    placeholder: "border-rose-500/30",
+    placeholderText: "text-rose-400",
+    tag: "bg-rose-500/15",
+    tagText: "text-rose-300",
   },
-  // Protección — verde (seguridad/EPP)
+  // Protección — verde
   green: {
-    card: "from-white to-green-50",
-    border: "border-green-300",
-    badge: "bg-green-100",
-    badgeText: "text-green-700",
-    placeholder: "border-green-200",
-    placeholderText: "text-green-500",
-    tag: "bg-green-50",
-    tagText: "text-green-700",
+    card: "",
+    border: "border-green-500",
+    badge: "bg-green-500/20",
+    badgeText: "text-green-300",
+    placeholder: "border-green-500/30",
+    placeholderText: "text-green-400",
+    tag: "bg-green-500/15",
+    tagText: "text-green-300",
   },
 };
 
@@ -111,7 +111,8 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
 
   return (
     <div
-      className={`bg-gradient-to-br ${c.card} p-6 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-3 transition-all duration-300 border-l-4 ${c.border} group`}
+      className={`bg-[#1a2845] p-6 rounded-2xl transform hover:-translate-y-2 transition-all duration-300 border-l-4 ${c.border} group`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.10), 0 4px 24px rgba(0,0,0,0.25)" }}
     >
       <div className="mb-4">
         {producto.imagenUrl ? (
@@ -128,7 +129,7 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
           </Link>
         ) : (
           <Link href={`/productos/${toSlug(producto.nombre)}`}>
-            <div className={`flex h-40 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed ${c.placeholder} bg-white/50 cursor-pointer`}>
+            <div className={`flex h-40 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed ${c.placeholder} bg-white/5 cursor-pointer`}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor" className={`w-10 h-10 ${c.placeholderText} opacity-30`}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
@@ -138,8 +139,8 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
         )}
       </div>
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-          <div className="text-gray-600">
+        <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.10] transition-colors">
+          <div className="text-slate-400">
             {icono}
           </div>
         </div>
@@ -151,17 +152,17 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
       </div>
       
       <Link href={`/productos/${toSlug(producto.nombre)}`}>
-        <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
+        <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 hover:text-blue-400 transition-colors cursor-pointer">
           {producto.nombre}
         </h3>
       </Link>
-      <p className="text-gray-600 text-sm mb-4">
+      <p className="text-slate-400 text-sm mb-4">
         {producto.descripcion}
       </p>
 
       {/* Precio y stock */}
       <div className="mb-4">
-        <p className="text-xl font-bold text-gray-900 mb-1">
+        <p className="text-xl font-bold text-white mb-1">
           {producto.precio != null
             ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(producto.precio)
             : <span className="text-sm text-gray-400 italic font-normal">Precio a consultar</span>
@@ -172,7 +173,7 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
             ? 'text-red-500'
             : producto.stock <= 10
             ? 'text-amber-500'
-            : 'text-gray-400'
+            : 'text-slate-500'
         }`}>
           {producto.stock === 0
             ? 'Sin stock'
@@ -191,7 +192,7 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
           Sin stock
         </div>
       ) : enCarrito ? (
-        <div className="w-full flex items-center justify-between gap-2 py-1.5 px-3 rounded-xl bg-blue-50 ring-1 ring-blue-200 mb-3">
+        <div className="w-full flex items-center justify-between gap-2 py-1.5 px-3 rounded-xl bg-blue-500/15 ring-1 ring-blue-500/30 mb-3">
           <button
             onClick={() => updateQuantity(producto.id, enCarrito.cantidad - 1)}
             className="w-7 h-7 rounded-lg bg-white border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center font-bold text-base transition-colors"
@@ -199,7 +200,7 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
           >
             −
           </button>
-          <span className="text-sm font-bold text-blue-700 flex items-center gap-1.5">
+          <span className="text-sm font-bold text-blue-400 flex items-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
@@ -227,7 +228,7 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
 
       <div className="flex items-center justify-between">
         <span className={`text-xs font-semibold px-2 py-1 ${c.tag} ${c.tagText} rounded-full flex items-center gap-1.5`}>
-          <span className="text-gray-500">{icono}</span>
+          <span className="text-slate-500">{icono}</span>
           {categoriaNombre}
         </span>
         {!enCarrito && <WhatsAppButton producto={producto} />}

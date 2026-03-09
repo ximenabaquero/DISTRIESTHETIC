@@ -74,7 +74,7 @@ export default function Footer() {
                   DISTRI<span className="text-blue-500">ESTHETIC</span>
                 </h2>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
-                  Medical Supply Excellence
+                  Distribución certificada Colombia
                 </p>
               </div>
             </Link>

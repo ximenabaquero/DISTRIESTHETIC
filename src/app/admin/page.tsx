@@ -11,9 +11,10 @@ import CreateProductModal from './components/CreateProductModal';
 import EditProductModal from './components/EditProductModal';
 import DashboardView from './components/DashboardView';
 import PedidosView from './components/PedidosView';
+import MensajesView from './components/MensajesView';
 import Link from 'next/link';
 
-type Section = 'dashboard' | 'productos' | 'pedidos' | 'configuracion';
+type Section = 'dashboard' | 'productos' | 'pedidos' | 'mensajes' | 'configuracion';
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   {
@@ -40,6 +41,15 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+  },
+  {
+    id: 'mensajes',
+    label: 'Mensajes',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
       </svg>
     ),
   },
@@ -79,6 +89,10 @@ export default function AdminPage() {
     pedidos,
     loadingPedidos,
     updatingPedidoId,
+    mensajes,
+    loadingMensajes,
+    deletingMensajeId,
+    updatingMensajeId,
     visibleProductos,
     hasDirty,
     loggedIn,
@@ -96,6 +110,8 @@ export default function AdminPage() {
     removeProductoImagen,
     handleDeleteProducto,
     handleUpdatePedidoEstado,
+    handleMarcarMensajeLeido,
+    handleEliminarMensaje,
     saveAll,
     handleLogin,
     handleLogout,
@@ -134,6 +150,11 @@ export default function AdminPage() {
                 {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'sin_entregar').length > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
                     {pedidos.filter(p => p.estado === 'sin_entregar').length}
+                  </span>
+                )}
+                {item.id === 'mensajes' && mensajes.filter(m => !m.leido).length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-blue-500 text-white rounded-full">
+                    {mensajes.filter(m => !m.leido).length}
                   </span>
                 )}
               </button>
@@ -220,6 +241,18 @@ export default function AdminPage() {
               loading={loadingPedidos}
               onUpdateEstado={handleUpdatePedidoEstado}
               updatingId={updatingPedidoId}
+            />
+          )}
+
+          {/* Mensajes */}
+          {section === 'mensajes' && (
+            <MensajesView
+              mensajes={mensajes}
+              loading={loadingMensajes}
+              onMarcarLeido={handleMarcarMensajeLeido}
+              onEliminar={handleEliminarMensaje}
+              deletingId={deletingMensajeId}
+              updatingId={updatingMensajeId}
             />
           )}
 

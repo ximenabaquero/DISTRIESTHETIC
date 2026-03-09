@@ -96,6 +96,7 @@ export default function HeaderTools({
         </button>
 
         {/* Save */}
+        <span title={!hasDirty && !saving ? "No hay cambios pendientes" : undefined}>
         <button
           onClick={onSave}
           disabled={!hasDirty || saving}
@@ -124,6 +125,7 @@ export default function HeaderTools({
             </>
           )}
         </button>
+        </span>
       </div>
     </div>
   );
