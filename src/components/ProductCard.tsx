@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { type Producto } from "@/data/productos";
 import { useCart } from "@/context/CartContext";
 
@@ -108,6 +109,11 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
   const enCarrito = items.find(i => i.producto.id === producto.id);
   const c = colorMap[color] ?? fallbackColor;
 
+  const [inputVal, setInputVal] = useState(String(enCarrito?.cantidad ?? 1));
+  useEffect(() => {
+    setInputVal(String(enCarrito?.cantidad ?? 1));
+  }, [enCarrito?.cantidad]);
+
   return (
     <div
       className={`bg-[#1a2845] p-6 rounded-2xl transform hover:-translate-y-2 transition-all duration-300 border-l-4 ${c.border} group`}
@@ -199,12 +205,21 @@ export function ProductCard({ producto, color, icono, categoriaNombre }: Product
           >
             −
           </button>
-          <span className="text-sm font-bold text-blue-400 flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-3.5 h-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-            </svg>
-            {enCarrito.cantidad} en carrito
-          </span>
+          <input
+            type="number"
+            min="1"
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            onBlur={() => {
+              const n = parseInt(inputVal, 10);
+              updateQuantity(producto.id, isNaN(n) ? 0 : n);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+            className="w-14 text-center text-sm font-bold bg-transparent text-blue-400 outline-none border-b border-blue-400/40 focus:border-blue-400"
+            aria-label="Cantidad"
+          />
           <button
             onClick={() => updateQuantity(producto.id, enCarrito.cantidad + 1)}
             className="w-7 h-7 rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center font-bold text-base transition-colors"

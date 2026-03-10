@@ -54,7 +54,31 @@ CREATE TABLE IF NOT EXISTS mensajes_contacto (
 );
 
 -- ──────────────────────────────────────────────────────────────
--- 4. Row Level Security
+-- 4. Tabla pedidos
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pedidos (
+  id          SERIAL       PRIMARY KEY,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  items       JSONB        NOT NULL DEFAULT '[]',
+  total       NUMERIC(14,2) NOT NULL DEFAULT 0,
+  metodo_pago TEXT         NOT NULL DEFAULT 'whatsapp'
+                CHECK (metodo_pago IN ('whatsapp', 'wompi')),
+  estado      TEXT         NOT NULL DEFAULT 'sin_entregar'
+                CHECK (estado IN ('sin_entregar', 'entregado', 'cancelado')),
+  referencia  TEXT         NULL,
+  nombre      TEXT         NULL,
+  telefono    TEXT         NULL,
+  ciudad      TEXT         NULL,
+  direccion   TEXT         NULL,
+  notas       TEXT         NULL
+);
+
+-- Índice para lookup rápido por referencia (Wompi webhook)
+CREATE INDEX IF NOT EXISTS pedidos_referencia_idx ON pedidos (referencia)
+  WHERE referencia IS NOT NULL;
+
+-- ──────────────────────────────────────────────────────────────
+-- 5. Row Level Security
 -- ──────────────────────────────────────────────────────────────
 -- Las escrituras siempre van por rutas server-side con service_role
 -- (bypass RLS). La clave anon sólo necesita leer.
@@ -62,6 +86,7 @@ CREATE TABLE IF NOT EXISTS mensajes_contacto (
 ALTER TABLE productos         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_info      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes_contacto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pedidos            ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública (catálogo y contacto visibles para todos)
 CREATE POLICY "productos_select_public"
@@ -75,8 +100,13 @@ CREATE POLICY "contact_info_select_public"
 CREATE POLICY "mensajes_insert_public"
   ON mensajes_contacto FOR INSERT WITH CHECK (true);
 
+-- Pedidos: inserción pública (el cliente crea el pedido al hacer checkout).
+-- Lectura y actualización van por service_role (admin + webhook de Wompi).
+CREATE POLICY "pedidos_insert_public"
+  ON pedidos FOR INSERT WITH CHECK (true);
+
 -- ──────────────────────────────────────────────────────────────
--- 5. Storage bucket product-images
+-- 6. Storage bucket product-images
 -- ──────────────────────────────────────────────────────────────
 -- Ejecutar desde el panel Storage de Supabase o con este SQL:
 INSERT INTO storage.buckets (id, name, public)

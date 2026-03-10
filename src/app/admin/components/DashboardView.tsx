@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -51,6 +52,58 @@ function ProductoTooltip({ active, payload, label }: { active?: boolean; payload
       <p className="font-semibold text-gray-700 mb-0.5 truncate">{label}</p>
       <p className="text-violet-600 font-bold">{payload[0].value} pedido{payload[0].value !== 1 ? 's' : ''}</p>
     </div>
+  );
+}
+
+function CleanupImagesButton() {
+  const [estado, setEstado] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [resultado, setResultado] = useState('');
+
+  async function limpiar() {
+    setEstado('loading');
+    try {
+      const res = await fetch('/api/admin/cleanup-images', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        setResultado(data.mensaje);
+        setEstado('done');
+      } else {
+        setResultado(data.error ?? 'Error desconocido');
+        setEstado('error');
+      }
+    } catch {
+      setResultado('Error de conexión');
+      setEstado('error');
+    }
+    setTimeout(() => setEstado('idle'), 4000);
+  }
+
+  return (
+    <button
+      onClick={limpiar}
+      disabled={estado === 'loading'}
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+      style={
+        estado === 'done'  ? { background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' } :
+        estado === 'error' ? { background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' } :
+                             { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }
+      }
+    >
+      {estado === 'loading' ? (
+        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      )}
+      {estado === 'loading' ? 'Limpiando...' :
+       estado === 'done'    ? resultado :
+       estado === 'error'   ? resultado :
+       'Limpiar imágenes huérfanas'}
+    </button>
   );
 }
 
@@ -169,6 +222,11 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
 
   return (
     <div className="space-y-6">
+      {/* ── Herramientas ── */}
+      <div className="flex justify-end">
+        <CleanupImagesButton />
+      </div>
+
       {/* ── KPIs ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {stats.map(stat => (
