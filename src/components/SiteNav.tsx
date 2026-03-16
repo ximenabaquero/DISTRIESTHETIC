@@ -86,14 +86,24 @@ export function SiteNav() {
       >
         <nav className="container mx-auto px-4 lg:px-8 h-full flex items-center justify-between">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 transition-transform active:scale-95" onClick={close}>
-            <Image src="/logodistsin.png" alt="Logo" width={160} height={58} className="h-11 w-auto object-contain" priority />
-            <span className="hidden lg:block text-sm font-black tracking-[0.28em] uppercase leading-none">
-              <span className={isScrolled ? "text-slate-800" : "text-white"}>DISTRI</span>
-              <span className={isScrolled ? "text-blue-600" : "text-sky-400"}>ESTHETIC</span>
-            </span>
-          </Link>
+{/* Logo */}
+<Link href="/" className="flex items-center gap-2 shrink-0 transition-transform active:scale-95" onClick={close}>
+  <Image 
+    src="/logodistsin.png" 
+    alt="Logo" 
+    width={160} 
+    height={58} 
+    className={`h-8 w-auto sm:h-11 object-contain transition-all duration-300 ${
+      isScrolled ? "brightness-100" : "brightness-0 invert"
+    }`} 
+    priority 
+  />
+  
+  <span className="text-[10px] sm:text-xs lg:text-sm font-black tracking-[0.12em] sm:tracking-[0.28em] uppercase leading-none whitespace-nowrap">
+    <span className={isScrolled ? "text-slate-800" : "text-white"}>DISTRI</span>
+    <span className={isScrolled ? "text-blue-600" : "text-sky-400"}>ESTHETIC</span>
+  </span>
+</Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
