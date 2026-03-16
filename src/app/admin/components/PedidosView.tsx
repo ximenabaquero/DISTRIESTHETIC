@@ -17,7 +17,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
 
 const estadoBadge: Record<PedidoEstado, string> = {
-  sin_entregar: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+  sin_entregar: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   entregado:    'bg-green-50 text-green-700 border-green-100',
   cancelado:    'bg-red-50 text-red-700 border-red-100',
 };
@@ -33,6 +33,140 @@ const metodoBadge: Record<PedidoMetodo, string> = {
   whatsapp: 'bg-green-50 text-green-700',
 };
 
+// ── Botones de acción reutilizables ───────────────────────────────────────────
+function AccionButtons({
+  p,
+  isBusy,
+  onUpdateEstado,
+  compact = false,
+}: {
+  p: Pedido;
+  isBusy: boolean;
+  onUpdateEstado: (id: number, estado: PedidoEstado) => void;
+  compact?: boolean;
+}) {
+  const base = compact
+    ? 'text-xs font-medium px-2 py-1 rounded-lg transition-colors disabled:opacity-50'
+    : 'text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50';
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <a
+        href={`/api/pedidos/${p.id}/cuenta-cobro`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${base} bg-blue-50 text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1`}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+          <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+        </svg>
+        Cobro
+      </a>
+      {p.estado !== 'entregado' && (
+        <button
+          onClick={() => onUpdateEstado(p.id, 'entregado')}
+          disabled={isBusy}
+          className={`${base} bg-green-50 text-green-700 hover:bg-green-100`}
+        >
+          {isBusy ? '...' : 'Entregado'}
+        </button>
+      )}
+      {p.estado !== 'cancelado' && (
+        <button
+          onClick={() => onUpdateEstado(p.id, 'cancelado')}
+          disabled={isBusy}
+          className={`${base} bg-red-50 text-red-700 hover:bg-red-100`}
+        >
+          {isBusy ? '...' : 'Cancelar'}
+        </button>
+      )}
+      {p.estado !== 'sin_entregar' && (
+        <button
+          onClick={() => onUpdateEstado(p.id, 'sin_entregar')}
+          disabled={isBusy}
+          className={`${base} bg-yellow-50 text-yellow-700 hover:bg-yellow-100`}
+        >
+          {isBusy ? '...' : 'Sin entregar'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Tarjeta móvil de pedido ───────────────────────────────────────────────────
+function PedidoCard({
+  p,
+  isBusy,
+  onUpdateEstado,
+}: {
+  p: Pedido;
+  isBusy: boolean;
+  onUpdateEstado: (id: number, estado: PedidoEstado) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isSinEntregar = p.estado === 'sin_entregar';
+  const itemsToShow = expanded ? p.items : p.items.slice(0, 3);
+
+  return (
+    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${
+      isSinEntregar ? 'border-yellow-300 border-l-4' : 'border-gray-200'
+    }`}>
+      {/* Cabecera */}
+      <div className="flex items-start justify-between px-4 pt-3 pb-2 gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs text-gray-400">#{p.id}</span>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${estadoBadge[p.estado]}`}>
+            {estadoLabel[p.estado]}
+          </span>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
+            {p.metodoPago === 'wompi' ? 'Wompi' : 'WhatsApp'}
+          </span>
+        </div>
+        <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+          {new Date(p.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+        </span>
+      </div>
+
+      {/* Productos */}
+      <div className="px-4 pb-2">
+        <div className="space-y-0.5">
+          {itemsToShow.map((item, i) => (
+            <p key={i} className="text-xs text-gray-700">
+              {item.nombre} <span className="text-gray-400">x{item.cantidad}</span>
+            </p>
+          ))}
+          {p.items.length > 3 && (
+            <button
+              onClick={() => setExpanded(v => !v)}
+              className="text-xs font-medium text-blue-500 hover:text-blue-700 mt-0.5"
+            >
+              {expanded ? '▲ Ver menos' : `+${p.items.length - 3} más`}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Info entrega */}
+      {(p.nombre || p.telefono || p.direccion || p.ciudad) && (
+        <div className="px-4 pb-2 flex flex-wrap gap-x-3 gap-y-0.5">
+          {p.nombre    && <span className="text-xs text-gray-600 font-medium">{p.nombre}</span>}
+          {p.telefono  && <span className="text-xs text-gray-500">{p.telefono}</span>}
+          {p.ciudad    && <span className="text-xs text-gray-500">{p.ciudad}</span>}
+          {p.direccion && <span className="text-xs text-gray-400 w-full truncate">{p.direccion}</span>}
+          {p.notas     && <span className="text-xs text-gray-400 italic w-full truncate">Nota: {p.notas}</span>}
+        </div>
+      )}
+
+      {/* Total + acciones */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 bg-gray-50">
+        <span className="font-bold text-gray-800">{fmt(p.total)}</span>
+        <AccionButtons p={p} isBusy={isBusy} onUpdateEstado={onUpdateEstado} compact />
+      </div>
+    </div>
+  );
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
 export default function PedidosView({ pedidos, loading, onUpdateEstado, updatingId }: PedidosViewProps) {
   const [filterMetodo, setFilterMetodo] = useState<'todos' | PedidoMetodo>('todos');
   const [filterEstado, setFilterEstado] = useState<'todos' | PedidoEstado>('todos');
@@ -74,8 +208,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="flex flex-wrap gap-3 items-center">
-        {/* Rango de fecha */}
+      <div className="flex flex-wrap gap-2 items-center">
         <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
           {(['todo', 'hoy', 'semana', 'mes'] as RangoFecha[]).map(r => (
             <button
@@ -90,7 +223,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <label className="text-xs font-medium text-gray-500">Método:</label>
           <select
             value={filterMetodo}
@@ -102,7 +235,8 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
             <option value="wompi">Wompi</option>
           </select>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1.5">
           <label className="text-xs font-medium text-gray-500">Estado:</label>
           <select
             value={filterEstado}
@@ -116,7 +250,6 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
           </select>
         </div>
 
-        {/* Exportar */}
         <div className="ml-auto flex gap-2">
           <Link
             href="/api/pedidos/export"
@@ -148,156 +281,130 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
             <p className="text-xs font-medium text-gray-400 mb-0.5">Total del período</p>
-            <p className="text-lg font-bold text-gray-800">{fmt(kpis.totalPeriodo)}</p>
+            <p className="text-base font-bold text-gray-800 truncate">{fmt(kpis.totalPeriodo)}</p>
             <p className="text-xs text-gray-400">{visible.length} pedido{visible.length !== 1 ? 's' : ''}</p>
           </div>
           <div className="bg-white rounded-xl border border-green-100 shadow-sm px-4 py-3">
-            <p className="text-xs font-medium text-gray-400 mb-0.5">Ingresos entregados</p>
-            <p className="text-lg font-bold text-green-700">{fmt(kpis.ingresosEntregados)}</p>
-            <p className="text-xs text-gray-400">{visible.filter(p => p.estado === 'entregado').length} entregado{visible.filter(p => p.estado === 'entregado').length !== 1 ? 's' : ''}</p>
+            <p className="text-xs font-medium text-gray-400 mb-0.5">Entregados</p>
+            <p className="text-base font-bold text-green-700 truncate">{fmt(kpis.ingresosEntregados)}</p>
+            <p className="text-xs text-gray-400">{visible.filter(p => p.estado === 'entregado').length} pedido{visible.filter(p => p.estado === 'entregado').length !== 1 ? 's' : ''}</p>
           </div>
           <div className={`rounded-xl border shadow-sm px-4 py-3 ${kpis.sinEntregar > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-100'}`}>
             <p className="text-xs font-medium text-gray-400 mb-0.5">Sin entregar</p>
-            <p className={`text-lg font-bold ${kpis.sinEntregar > 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{kpis.sinEntregar}</p>
+            <p className={`text-base font-bold ${kpis.sinEntregar > 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{kpis.sinEntregar}</p>
             <p className="text-xs text-gray-400">{kpis.sinEntregar > 0 ? 'Requieren atención' : 'Todo al día'}</p>
           </div>
         </div>
       )}
 
-      {/* Tabla */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="py-16 text-center text-sm text-gray-400">Cargando pedidos...</div>
-        ) : visible.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">
-            {pedidos.length === 0 ? 'Aún no hay pedidos registrados.' : 'Sin resultados con los filtros aplicados.'}
+      {/* Contenido */}
+      {loading ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center text-sm text-gray-400">
+          Cargando pedidos...
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center text-sm text-gray-400">
+          {pedidos.length === 0 ? 'Aún no hay pedidos registrados.' : 'Sin resultados con los filtros aplicados.'}
+        </div>
+      ) : (
+        <>
+          {/* ── Vista móvil: cards ── */}
+          <div className="lg:hidden space-y-3">
+            {visible.map(p => (
+              <PedidoCard
+                key={p.id}
+                p={p}
+                isBusy={updatingId === p.id}
+                onUpdateEstado={onUpdateEstado}
+              />
+            ))}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-left">
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Fecha</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Productos</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Entrega</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Método</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {visible.map(p => {
-                  const isBusy = updatingId === p.id;
-                  const isExpanded = expandedRows.has(p.id);
-                  const isSinEntregar = p.estado === 'sin_entregar';
-                  const itemsToShow = isExpanded ? p.items : p.items.slice(0, 2);
-                  return (
-                    <tr
-                      key={p.id}
-                      className={`transition-colors ${
-                        isSinEntregar
-                          ? 'bg-yellow-50 border-l-4 border-yellow-400 hover:bg-yellow-100'
-                          : 'border-l-4 border-transparent hover:bg-gray-50'
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500">#{p.id}</td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                        {new Date(p.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
-                      </td>
-                      <td className="px-4 py-3 max-w-xs">
-                        <div className="space-y-0.5">
-                          {itemsToShow.map((item, i) => (
-                            <p key={i} className="text-xs text-gray-700 truncate">
-                              {item.nombre} <span className="text-gray-400">x{item.cantidad}</span>
-                            </p>
-                          ))}
-                          {p.items.length > 2 && (
-                            <button
-                              onClick={() => toggleExpanded(p.id)}
-                              className="text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors mt-0.5"
-                            >
-                              {isExpanded ? '▲ Ver menos' : `+${p.items.length - 2} más`}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 max-w-[160px]">
-                        {(p.telefono || p.direccion) ? (
+
+          {/* ── Vista escritorio: tabla ── */}
+          <div className="hidden lg:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50 text-left">
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Fecha</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Productos</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Entrega</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Método</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {visible.map(p => {
+                    const isBusy = updatingId === p.id;
+                    const isExpanded = expandedRows.has(p.id);
+                    const isSinEntregar = p.estado === 'sin_entregar';
+                    const itemsToShow = isExpanded ? p.items : p.items.slice(0, 2);
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`transition-colors ${
+                          isSinEntregar
+                            ? 'bg-yellow-50 border-l-4 border-yellow-400 hover:bg-yellow-100'
+                            : 'border-l-4 border-transparent hover:bg-gray-50'
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-mono text-xs text-gray-500">#{p.id}</td>
+                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+                        </td>
+                        <td className="px-4 py-3 max-w-xs">
                           <div className="space-y-0.5">
-                            {p.telefono && (
-                              <p className="text-xs text-gray-700 font-medium">{p.telefono}</p>
-                            )}
-                            {p.direccion && (
-                              <p className="text-xs text-gray-500 truncate" title={p.direccion}>{p.direccion}</p>
+                            {itemsToShow.map((item, i) => (
+                              <p key={i} className="text-xs text-gray-700 truncate">
+                                {item.nombre} <span className="text-gray-400">x{item.cantidad}</span>
+                              </p>
+                            ))}
+                            {p.items.length > 2 && (
+                              <button
+                                onClick={() => toggleExpanded(p.id)}
+                                className="text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors mt-0.5"
+                              >
+                                {isExpanded ? '▲ Ver menos' : `+${p.items.length - 2} más`}
+                              </button>
                             )}
                           </div>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">{fmt(p.total)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
-                          {p.metodoPago === 'wompi' ? 'Wompi' : 'WhatsApp'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${estadoBadge[p.estado]}`}>
-                          {estadoLabel[p.estado]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <a
-                            href={`/api/pedidos/${p.id}/cuenta-cobro`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-medium px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors inline-flex items-center gap-1"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                              <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
-                            </svg>
-                            Cobro
-                          </a>
-                          {p.estado !== 'entregado' && (
-                            <button
-                              onClick={() => onUpdateEstado(p.id, 'entregado')}
-                              disabled={isBusy}
-                              className="text-xs font-medium px-2 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors"
-                            >
-                              {isBusy ? '...' : 'Entregado'}
-                            </button>
+                        </td>
+                        <td className="px-4 py-3 max-w-[160px]">
+                          {(p.telefono || p.direccion) ? (
+                            <div className="space-y-0.5">
+                              {p.telefono && <p className="text-xs text-gray-700 font-medium">{p.telefono}</p>}
+                              {p.direccion && <p className="text-xs text-gray-500 truncate" title={p.direccion}>{p.direccion}</p>}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
                           )}
-                          {p.estado !== 'cancelado' && (
-                            <button
-                              onClick={() => onUpdateEstado(p.id, 'cancelado')}
-                              disabled={isBusy}
-                              className="text-xs font-medium px-2 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors"
-                            >
-                              {isBusy ? '...' : 'Cancelar'}
-                            </button>
-                          )}
-                          {p.estado !== 'sin_entregar' && (
-                            <button
-                              onClick={() => onUpdateEstado(p.id, 'sin_entregar')}
-                              disabled={isBusy}
-                              className="text-xs font-medium px-2 py-1 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 disabled:opacity-50 transition-colors"
-                            >
-                              {isBusy ? '...' : 'Sin entregar'}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">{fmt(p.total)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
+                            {p.metodoPago === 'wompi' ? 'Wompi' : 'WhatsApp'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${estadoBadge[p.estado]}`}>
+                            {estadoLabel[p.estado]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <AccionButtons p={p} isBusy={isBusy} onUpdateEstado={onUpdateEstado} compact />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
