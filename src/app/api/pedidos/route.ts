@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
 
     const pedido = await createPedido(data);
     return NextResponse.json({ ok: true, pedido });
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/pedidos] Error:', err);
     return NextResponse.json({ ok: false, error: 'Error al procesar el pedido.' }, { status: 500 });
   }
 }
