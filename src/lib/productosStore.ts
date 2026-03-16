@@ -9,25 +9,31 @@ export type ProductoInfoUpdate = {
   disponible?: boolean | null;
 };
 
-// ──────────────────────────────────────────────────────────────
-// Supabase client (server-side, service role)
-// ──────────────────────────────────────────────────────────────
+// ── Inicialización lazy (Singleton) ────────────────────────────────────────
+// "Singleton" significa que solo se crea UNA instancia del cliente Supabase
+// en toda la vida del servidor. Se guarda en esta variable de módulo.
+// La primera vez que se llama getSupabase(), se crea. Las siguientes veces
+// devuelve el mismo cliente ya creado, sin reconectarse.
 let supabase: SupabaseClient | null = null;
+
+// Flag para saber si ya sembramos los productos base.
+// Evita verificar la base de datos en cada request.
 let seeded = false;
 
 async function getSupabase(): Promise<SupabaseClient | null> {
-  if (supabase) return supabase;
+  if (supabase) return supabase; // ya existe → reusar
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  if (!url || !key) return null; // sin credenciales → sin base de datos
   const { createClient } = await import('@supabase/supabase-js');
   supabase = createClient(url, key, { auth: { persistSession: false } });
   return supabase;
 }
 
-// ──────────────────────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────────────────────
+// ── mapRow: traduce una fila de la BD al tipo Producto del código ───────────
+// La base de datos usa snake_case (imagen_url, is_base) pero el código usa
+// camelCase (imagenUrl). Esta función hace la traducción.
+// También convierte strings a números, maneja nulls, etc.
 function mapRow(row: Record<string, unknown>): Producto {
   return {
     id: Number(row.id),
@@ -42,13 +48,17 @@ function mapRow(row: Record<string, unknown>): Producto {
   };
 }
 
-/**
- * Siembra los 37 productos base si la tabla está vacía.
- * Usa upsert para que sea idempotente en caso de ejecución repetida.
- */
+// ── ensureSeeded: siembra los productos base si la tabla está vacía ─────────
+// "Sembrar" (seed) = insertar datos iniciales en la base de datos.
+// Esta función es IDEMPOTENTE: si los datos ya están, no hace nada.
+// Gracias a `upsert` (insert + update si existe), se puede llamar
+// múltiples veces sin crear duplicados.
+// El flag `seeded` evita hacer la consulta COUNT en cada request.
 async function ensureSeeded(sb: SupabaseClient): Promise<void> {
-  if (seeded) return;
+  if (seeded) return; // ya se verificó antes → saltarse
 
+  // Contar cuántos productos hay en la tabla
+  // `head: true` hace que solo devuelva el conteo sin traer los datos
   const { count, error } = await sb
     .from('productos')
     .select('*', { count: 'exact', head: true });
@@ -59,10 +69,11 @@ async function ensureSeeded(sb: SupabaseClient): Promise<void> {
   }
 
   if (count !== null && count > 0) {
-    seeded = true;
+    seeded = true; // ya hay datos → no sembrar
     return;
   }
 
+  // La tabla está vacía → insertar todos los productos base del archivo productos.ts
   const rows = productosBase.map((p) => ({
     id: p.id,
     nombre: p.nombre,
@@ -73,9 +84,11 @@ async function ensureSeeded(sb: SupabaseClient): Promise<void> {
     precio: p.precio,
     stock: p.stock,
     imagen_url: p.imagenUrl,
-    is_base: true,
+    is_base: true, // marcar como producto base (no se puede eliminar desde el admin)
   }));
 
+  // upsert = "insert o update si ya existe" (idempotente)
+  // onConflict: 'id' → si ya existe un producto con ese id, actualizar
   const { error: insertError } = await sb
     .from('productos')
     .upsert(rows, { onConflict: 'id' });
@@ -87,16 +100,18 @@ async function ensureSeeded(sb: SupabaseClient): Promise<void> {
   seeded = true;
 }
 
-// ──────────────────────────────────────────────────────────────
-// API pública
-// ──────────────────────────────────────────────────────────────
+// ── API pública ─────────────────────────────────────────────────────────────
 
 export async function getAllProductos(): Promise<Producto[]> {
   const sb = await getSupabase();
+  // Sin Supabase (desarrollo sin .env) → devolver los productos base del código
   if (!sb) return [...productosBase];
 
-  await ensureSeeded(sb);
+  await ensureSeeded(sb); // asegurar que existan datos antes de leer
 
+  // Supabase devuelve { data, error }
+  // data = array de filas si todo salió bien
+  // error = objeto con mensaje si algo falló
   const { data, error } = await sb
     .from('productos')
     .select('*')
@@ -104,7 +119,7 @@ export async function getAllProductos(): Promise<Producto[]> {
 
   if (error || !data) {
     console.error('[productosStore] Error obteniendo productos:', error?.message);
-    return [...productosBase];
+    return [...productosBase]; // fallback a datos del código si falla la BD
   }
 
   return data.map((row) => mapRow(row as Record<string, unknown>));
@@ -116,6 +131,9 @@ export async function bulkUpdate(
   const sb = await getSupabase();
   if (!sb) throw new Error('Supabase no configurado.');
 
+  // Promise.all ejecuta todos los updates EN PARALELO, no uno por uno.
+  // Si hubiera 50 productos, sin Promise.all tardaría 50 × tiempo_de_BD.
+  // Con Promise.all, todos corren al mismo tiempo → mucho más rápido.
   await Promise.all(
     list.map((item) =>
       sb
@@ -125,6 +143,7 @@ export async function bulkUpdate(
     ),
   );
 
+  // Devolver la lista actualizada desde la base de datos
   return getAllProductos();
 }
 
@@ -143,7 +162,7 @@ export async function createProducto(data: Omit<Producto, 'id'>): Promise<Produc
       precio: data.precio,
       stock: data.stock,
       imagen_url: data.imagenUrl,
-      is_base: false,
+      is_base: false, // es un producto extra agregado manualmente → se puede eliminar
     })
     .select()
     .single();
@@ -162,6 +181,9 @@ export async function updateProductoInfo(
   const sb = await getSupabase();
   if (!sb) throw new Error('Supabase no configurado.');
 
+  // Construir el objeto de actualización dinámicamente:
+  // solo incluir los campos que realmente se quieren cambiar (no son null/undefined).
+  // Así no sobreescribimos accidentalmente campos que no se modificaron.
   const updates: Record<string, unknown> = {};
   if (data.nombre !== undefined && data.nombre !== null) updates.nombre = data.nombre;
   if (data.descripcion !== undefined && data.descripcion !== null) updates.descripcion = data.descripcion;
@@ -169,7 +191,7 @@ export async function updateProductoInfo(
   if (data.etiqueta !== undefined && data.etiqueta !== null) updates.etiqueta = data.etiqueta;
   if (data.disponible !== undefined && data.disponible !== null) updates.disponible = data.disponible;
 
-  if (Object.keys(updates).length === 0) return null;
+  if (Object.keys(updates).length === 0) return null; // nada que actualizar
 
   const { data: updated, error } = await sb
     .from('productos')
@@ -191,7 +213,7 @@ export async function setProductoImagen(
 
   const { data: updated, error } = await sb
     .from('productos')
-    .update({ imagen_url: imagenUrl })
+    .update({ imagen_url: imagenUrl }) // null = quitar la imagen
     .eq('id', id)
     .select()
     .single();
@@ -207,6 +229,7 @@ export async function deleteProducto(id: number): Promise<Producto | null> {
   const sb = await getSupabase();
   if (!sb) throw new Error('Supabase no configurado.');
 
+  // Primero verificar que el producto existe y que no es un producto base
   const { data: current, error: fetchError } = await sb
     .from('productos')
     .select('*')
@@ -215,7 +238,8 @@ export async function deleteProducto(id: number): Promise<Producto | null> {
 
   if (fetchError || !current) return null;
 
-  // Solo se pueden eliminar productos extras (is_base = false)
+  // Los productos base (is_base = true) no se pueden eliminar
+  // para que el catálogo siempre tenga los productos originales
   if ((current as Record<string, unknown>).is_base) return null;
 
   const { error } = await sb.from('productos').delete().eq('id', id);
@@ -230,7 +254,11 @@ export async function decrementarStock(
   const sb = await getSupabase();
   if (!sb) throw new Error('Supabase no configurado.');
 
-  // Obtener stocks actuales de los productos involucrados
+  // No se puede decrementar directamente con SQL desde el cliente de Supabase
+  // sin funciones de base de datos. El proceso es:
+  // 1. Leer los stocks actuales de todos los productos del pedido
+  // 2. Calcular el nuevo stock (actual - cantidad pedida, mínimo 0)
+  // 3. Actualizar todos en paralelo
   const ids = items.map(i => i.id);
   const { data, error } = await sb.from('productos').select('id, stock').in('id', ids);
   if (error || !data) {
@@ -238,12 +266,14 @@ export async function decrementarStock(
     return;
   }
 
+  // Convertir a Map para buscar stock por id en O(1) en vez de O(n)
   const stockMap = new Map(data.map(r => [Number(r.id), Number(r.stock)]));
 
+  // Actualizar todos los stocks en paralelo
   await Promise.all(
     items.map(item => {
       const current = stockMap.get(item.id) ?? 0;
-      const newStock = Math.max(0, current - item.cantidad);
+      const newStock = Math.max(0, current - item.cantidad); // nunca menor que 0
       return sb.from('productos').update({ stock: newStock }).eq('id', item.id);
     }),
   );

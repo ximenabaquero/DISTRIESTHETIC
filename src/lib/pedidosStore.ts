@@ -37,6 +37,12 @@ export interface CreatePedidoData {
   notas?: string;
 }
 
+// ── Inicialización lazy del cliente Supabase ────────────────────────────────
+// A diferencia de productosStore, esta función LANZA UN ERROR si Supabase
+// no está configurado, en vez de devolver null.
+// Esto es intencional: los pedidos SIEMPRE necesitan base de datos.
+// Si no está configurado, es mejor fallar con un error claro que
+// silenciosamente no guardar pedidos.
 let supabase: SupabaseClient | null = null;
 
 async function getSupabase(): Promise<SupabaseClient> {
@@ -49,11 +55,16 @@ async function getSupabase(): Promise<SupabaseClient> {
   return supabase;
 }
 
+// ── mapRow: convierte una fila de la base de datos al formato del código ────
+// Supabase devuelve columnas en snake_case (created_at, metodo_pago)
+// pero el código usa camelCase (createdAt, metodoPago).
+// Los campos opcionales (nombre, telefono, etc.) pueden ser null en la BD
+// — esto es normal, pedidos de Wompi no siempre tienen todos los datos.
 function mapRow(row: Record<string, unknown>): Pedido {
   return {
     id: Number(row.id),
     createdAt: String(row.created_at),
-    items: (row.items as PedidoItem[]) ?? [],
+    items: (row.items as PedidoItem[]) ?? [], // si es null, usar array vacío
     total: Number(row.total),
     metodoPago: String(row.metodo_pago) as PedidoMetodo,
     estado: String(row.estado) as PedidoEstado,
@@ -69,6 +80,8 @@ function mapRow(row: Record<string, unknown>): Pedido {
 export async function createPedido(data: CreatePedidoData): Promise<Pedido> {
   const sb = await getSupabase();
 
+  // .insert() agrega una fila, .select() devuelve la fila insertada,
+  // .single() espera exactamente 1 resultado (lanza error si hay 0 o más)
   const { data: inserted, error } = await sb
     .from('pedidos')
     .insert({
@@ -76,7 +89,7 @@ export async function createPedido(data: CreatePedidoData): Promise<Pedido> {
       total: data.total,
       metodo_pago: data.metodoPago,
       referencia: data.referencia ?? null,
-      estado: 'sin_entregar',
+      estado: 'sin_entregar', // estado inicial siempre es sin_entregar
       nombre: data.nombre ?? null,
       telefono: data.telefono ?? null,
       ciudad: data.ciudad ?? null,
@@ -99,7 +112,7 @@ export async function getAllPedidos(): Promise<Pedido[]> {
   const { data, error } = await sb
     .from('pedidos')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }); // más recientes primero
 
   if (error || !data) {
     console.error('[pedidosStore] Error obteniendo pedidos:', error?.message);
@@ -109,6 +122,11 @@ export async function getAllPedidos(): Promise<Pedido[]> {
   return data.map((row) => mapRow(row as Record<string, unknown>));
 }
 
+// .single() vs .maybeSingle():
+// - .single() → espera exactamente 1 resultado; si no existe, lanza error
+// - .maybeSingle() → devuelve null si no encuentra nada, sin lanzar error
+// Se usa .single() cuando sabemos que el ID debe existir,
+// y .maybeSingle() cuando el registro podría no estar (ej: buscar por referencia)
 export async function getPedidoById(id: number): Promise<Pedido | null> {
   const sb = await getSupabase();
 
@@ -129,7 +147,7 @@ export async function getPedidoByReferencia(referencia: string): Promise<Pedido 
     .from('pedidos')
     .select('*')
     .eq('referencia', referencia)
-    .maybeSingle();
+    .maybeSingle(); // puede no existir si la referencia es inválida
 
   if (error || !data) return null;
   return mapRow(data as Record<string, unknown>);

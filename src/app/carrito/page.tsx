@@ -7,6 +7,9 @@ import { useCart } from "@/context/CartContext";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { ConfirmModal } from "@/components/ConfirmModal";
 
+// Formateador de precios en pesos colombianos (COP).
+// Intl.NumberFormat es nativo del navegador/Node → no necesita librería externa.
+// maximumFractionDigits: 0 → sin centavos (ej: $15.000 en vez de $15.000,00)
 const fmt = (n: number) =>
   new Intl.NumberFormat("es-CO", {
     style: "currency",
@@ -30,20 +33,29 @@ interface ConfirmedOrder {
   whatsappUrl: string;
 }
 
+// ── buildCartMessage: arma el texto que se enviará por WhatsApp ────────────────
+// IMPORTANTE: no uses emojis aquí (🏙️, 📦, etc.).
+// Cuando la URL se construye con encodeURIComponent(), los emojis se convierten en
+// secuencias como %F0%9F%93%A6. WhatsApp no decodifica bien esas secuencias y
+// el receptor ve símbolos extraños (◆◆◆) en vez del emoji.
+// El asterisco *texto* es el formato de negrita de WhatsApp → sí funciona bien.
 function buildCartMessage(
   items: { producto: { nombre: string; precio: number | null }; cantidad: number }[],
   delivery: DeliveryInfo
 ): string {
+  // Construir una línea por producto: "• Producto x2 — $30.000"
   const lines = items.map(
     (i) =>
       `• ${i.producto.nombre} x${i.cantidad}${
         i.producto.precio != null ? ` — ${fmt(i.producto.precio * i.cantidad)}` : ""
       }`
   );
+  // Calcular el total sumando precio × cantidad de cada ítem
   const total = items.reduce(
     (sum, i) => sum + (i.producto.precio ?? 0) * i.cantidad,
     0
   );
+  // Solo mostrar el total si hay precios definidos (evitar "$0" confuso)
   const totalLine = total > 0 ? `\n*Total estimado: ${fmt(total)}*` : "";
   return (
     `Hola, quisiera hacer el siguiente pedido:\n\n${lines.join("\n")}${totalLine}` +
@@ -56,6 +68,8 @@ function buildCartMessage(
 }
 
 /* ── Indicador de pasos ─────────────────────────────────────────── */
+// Barra de progreso visual: Resumen → Entrega → Pago → Listo
+// Recibe el paso actual (1-4) y colorea el estado de cada círculo.
 function StepIndicator({ step }: { step: 1 | 2 | 3 | 4 }) {
   const steps = [
     { n: 1, label: "Resumen" },
@@ -71,12 +85,14 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 | 4 }) {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                 step > s.n
-                  ? "bg-blue-600 text-white"
+                  ? "bg-blue-600 text-white"      // paso YA completado → azul sólido
                   : step === s.n
-                  ? "bg-blue-600 text-white ring-4 ring-blue-100"
-                  : "bg-gray-100 text-gray-400"
+                  ? "bg-blue-600 text-white ring-4 ring-blue-100" // paso ACTUAL → azul con anillo
+                  : "bg-gray-100 text-gray-400"   // paso pendiente → gris
               }`}
             >
+              {/* Si el paso ya fue completado → mostrar checkmark ✓ */}
+              {/* Si es el paso actual o futuro → mostrar el número */}
               {step > s.n ? (
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -248,12 +264,19 @@ function StepEntrega({
   onNext: () => void;
   onBack: () => void;
 }) {
+  // Partial<DeliveryInfo> significa que el objeto puede tener ALGUNOS (o ninguno)
+  // de los campos de DeliveryInfo. Se usa aquí porque solo se agregan al objeto
+  // los campos que tienen error → los campos válidos simplemente no existen en `errors`.
   const [errors, setErrors] = useState<Partial<DeliveryInfo>>({});
 
   const validate = () => {
     const e: Partial<DeliveryInfo> = {};
     if (!delivery.nombre.trim()) e.nombre = "El nombre es obligatorio";
     if (!delivery.telefono.trim()) e.telefono = "El teléfono es obligatorio";
+    // Regex del teléfono: acepta +57 300 123 4567, (300) 123-4567, etc.
+    // ^\+? → puede empezar con + (código de país, opcional)
+    // [\d\s\-()]  → permite dígitos, espacios, guiones y paréntesis
+    // {7,20} → entre 7 y 20 caracteres en total
     else if (!/^\+?[\d\s\-()]{7,20}$/.test(delivery.telefono.trim()))
       e.telefono = "Ingresa un número válido";
     if (!delivery.ciudad.trim()) e.ciudad = "La ciudad es obligatoria";
@@ -261,6 +284,7 @@ function StepEntrega({
     else if (delivery.direccion.trim().length < 5)
       e.direccion = "Ingresa una dirección completa";
     setErrors(e);
+    // Si el objeto de errores está vacío → todos los campos son válidos
     return Object.keys(e).length === 0;
   };
 
@@ -469,7 +493,11 @@ function StepPago({
     if (whatsappLoading) return;
     setWhatsappLoading(true);
 
-    // Snapshot antes de limpiar el carrito
+    // ── SNAPSHOT: guardar los items ANTES de llamar clearCart() ─────────────
+    // clearCart() vacía el estado del carrito. Si construyéramos el mensaje
+    // DESPUÉS de limpiar, `items` ya estaría vacío y el mensaje saldría en blanco.
+    // Al hacer el snapshot aquí, guardamos una copia fija que no cambia aunque
+    // el carrito se vacíe más adelante.
     const itemsSnapshot = items.map((i) => ({
       nombre: i.producto.nombre,
       precio: i.producto.precio,
@@ -477,6 +505,7 @@ function StepPago({
     }));
     const totalSnapshot = total;
 
+    // Intentar registrar el pedido en la base de datos (opcional, puede fallar)
     let pedidoId: number | null = null;
     try {
       const res = await fetch("/api/pedidos", {
@@ -500,34 +529,45 @@ function StepPago({
       });
       const json = await res.json();
       if (json.ok) pedidoId = json.pedido.id;
-    } catch {/* ignorar errores de red */}
+    } catch {/* ignorar errores de red — el pedido por WhatsApp sigue funcionando */}
 
     setWhatsappLoading(false);
 
+    // Construir el mensaje usando `items` (aún disponible porque snapshot ya fue tomado)
     const msg = buildCartMessage(items, delivery);
+    // encodeURIComponent convierte el texto en formato seguro para URL
+    // Ej: "Hola, pedido:" → "Hola%2C%20pedido%3A"
     const waUrl = `https://wa.me/${whatsapp}?text=${encodeURIComponent(msg)}`;
 
-    // Abrir WhatsApp y pasar a confirmación
+    // Abrir WhatsApp en nueva pestaña, luego limpiar el carrito y pasar al paso 4
     window.open(waUrl, "_blank");
-    clearCart();
+    clearCart(); // ← se limpia DESPUÉS del snapshot, por eso el mensaje es correcto
     onWhatsAppSent({
       pedidoId,
-      items: itemsSnapshot,
+      items: itemsSnapshot,  // pasar la copia guardada, no el carrito (ya vacío)
       total: totalSnapshot,
       delivery,
       whatsappUrl: waUrl,
     });
   };
 
+  // ── handlePagarWompi: flujo de pago online en 4 pasos ───────────────────────
+  // El orden importa: cada paso depende del anterior.
   const handlePagarWompi = async () => {
     if (total === 0 || wompiLoading) return;
     setWompiLoading(true);
 
     try {
+      // PASO 1: Generar referencia única para este pedido.
+      // Date.now() da el timestamp en milisegundos → número casi siempre único.
+      // Math.random().toString(36) genera letras/números aleatorios en base 36.
+      // Juntos forman algo como "DIST-1710001234567-A3K9X"
       const reference = `DIST-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-      const amountInCents = total * 100;
+      const amountInCents = total * 100; // Wompi trabaja en centavos, no en pesos
 
-      // Generar firma
+      // PASO 2: Pedir la firma de integridad al servidor.
+      // La firma se calcula con el secreto de Wompi (que solo el servidor conoce).
+      // Sin la firma, Wompi rechaza el pago → no se puede falsificar el monto.
       const sigRes = await fetch("/api/payments/wompi-signature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -541,8 +581,10 @@ function StepPago({
 
       const { signature } = await sigRes.json();
 
-      // Crear el pedido ANTES de redirigir a Wompi
-      // (el webhook lo actualizará a 'pagado' al confirmar)
+      // PASO 3: Crear el pedido en la BD ANTES de redirigir.
+      // Si se crea después, el usuario podría cerrar la ventana y el pedido nunca
+      // quedaría registrado. Al crearlo antes con estado 'sin_entregar', el webhook
+      // de Wompi puede actualizarlo a 'entregado' cuando confirme el pago.
       await fetch("/api/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -555,7 +597,7 @@ function StepPago({
           })),
           total,
           metodo_pago: "wompi",
-          referencia: reference,
+          referencia: reference, // enlazar el pedido con la transacción de Wompi
           nombre: delivery.nombre,
           telefono: delivery.telefono,
           ciudad: delivery.ciudad,
@@ -564,7 +606,8 @@ function StepPago({
         }),
       });
 
-      // Limpiar carrito y redirigir
+      // PASO 4: Limpiar el carrito y redirigir al checkout de Wompi.
+      // window.location.href hace una redirección completa (cambia la página).
       clearCart();
 
       const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY;
@@ -573,19 +616,22 @@ function StepPago({
         return;
       }
 
+      // URLSearchParams construye la query string de forma segura (escapa caracteres especiales)
       const params = new URLSearchParams({
         "public-key": publicKey,
         currency: "COP",
         "amount-in-cents": String(amountInCents),
         reference,
         "signature:integrity": signature,
-        "redirect-url": `${window.location.origin}/pago`,
+        "redirect-url": `${window.location.origin}/pago`, // a dónde vuelve el usuario tras pagar
       });
 
       window.location.href = `https://checkout.wompi.co/p/?${params.toString()}`;
     } catch {
       alert("Error de conexión. Intenta nuevamente.");
     } finally {
+      // finally siempre se ejecuta, tanto si hubo error como si no.
+      // Garantiza que el botón nunca quede atascado en estado "cargando".
       setWompiLoading(false);
     }
   };
@@ -790,6 +836,11 @@ function StepConfirmacion({ confirmed }: { confirmed: ConfirmedOrder }) {
 }
 
 /* ── Página principal ───────────────────────────────────────────── */
+// Máquina de estados de 4 pasos:
+//   1 (Resumen) → 2 (Entrega) → 3 (Pago) → 4 (Confirmación)
+// El estado `step` controla qué componente se renderiza.
+// El estado `delivery` viaja del paso 2 al 3 al 4 para mostrar los datos al final.
+// El estado `confirmedOrder` solo se llena cuando el pedido se envía por WhatsApp.
 export default function CarritoPage() {
   const { items, itemCount, clearCart } = useCart();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
