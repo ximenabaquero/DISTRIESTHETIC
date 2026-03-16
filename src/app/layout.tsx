@@ -3,6 +3,7 @@ import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { CartToastNotification } from "@/components/CartToastNotification";
+import { SiteNav } from "@/components/SiteNav";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -34,13 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <head>
-        <meta charSet="UTF-8" />
-      </head>
-      <body className={`${syne.variable} ${dmSans.variable} antialiased font-sans`}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${syne.variable} ${dmSans.variable} antialiased font-sans bg-[#07091C] min-h-screen`}>
         <CartProvider>
-          {children}
+          <SiteNav />
+          <main>{children}</main>
           <CartToastNotification />
         </CartProvider>
       </body>

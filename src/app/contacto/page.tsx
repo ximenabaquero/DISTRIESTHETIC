@@ -1,4 +1,3 @@
-import { SiteNav } from "@/components/SiteNav";
 import Footer from "@/app/components/index/Footer";
 import { getContactInfo } from "@/lib/contactInfoStore";
 import ContactForm from "./components/ContactForm";
@@ -23,7 +22,6 @@ export default async function ContactoPage() {
       <div className="absolute top-1/2 right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(0,200,160,0.07) 0%, transparent 70%)" }} />
       <div className="absolute bottom-0 left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(26,108,246,0.06) 0%, transparent 70%)" }} />
 
-      <SiteNav />
 
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-6xl relative z-10">
         <div className="mb-10">

@@ -2,7 +2,6 @@
 
 import { Suspense, useMemo, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SiteNav } from "@/components/SiteNav";
 import { ProductCard } from "@/components/ProductCard";
 import { type Producto } from "@/data/productos";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -160,7 +159,6 @@ function ProductosContent() {
 
   return (
     <div className="min-h-screen bg-[#0b1221]">
-      <SiteNav />
 
       <div className="container mx-auto px-4 sm:px-6 py-10">
 

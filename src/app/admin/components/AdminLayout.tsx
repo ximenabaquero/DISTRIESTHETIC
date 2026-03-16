@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { SiteNav } from '@/components/SiteNav';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -12,7 +11,6 @@ export default function AdminLayout({ children, loggedIn, onLogout, sessionEmail
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Usar la navegación unificada del sitio */}
-      <SiteNav />
 
       {/* Admin info bar - Barra de información del admin debajo de la nav principal */}
       {loggedIn && (

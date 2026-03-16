@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { SiteNav } from "@/components/SiteNav";
 import { useCart } from "@/context/CartContext";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -797,7 +796,6 @@ export default function CarritoPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <SiteNav />
 
       <div className="container mx-auto px-4 sm:px-6 py-10 max-w-3xl">
         {/* Header */}

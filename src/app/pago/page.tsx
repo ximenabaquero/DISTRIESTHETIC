@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { SiteNav } from "@/components/SiteNav";
 import { useCart } from "@/context/CartContext";
 
 type TxStatus = "APPROVED" | "DECLINED" | "VOIDED" | "ERROR" | "PENDING" | null;
@@ -59,7 +58,6 @@ function PagoContent() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <SiteNav />
 
       <div className="container mx-auto px-4 sm:px-6 py-16 max-w-md">
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 text-center">

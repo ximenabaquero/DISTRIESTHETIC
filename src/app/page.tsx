@@ -7,7 +7,6 @@ import Footer from "./components/index/Footer";
 export default function Home() {
   return (
     <div className="min-h-screen">
-      <SiteNav />
       <HeroSection />
       <BenefitsSection />
       <MisionVisionSection />
