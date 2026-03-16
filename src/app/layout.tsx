@@ -23,9 +23,12 @@ export const metadata: Metadata = {
   title: "DISTRIESTHETIC - Distribución de Productos Estéticos",
   description: "Distribución de medicamentos, soluciones, insumos, químicos, ropa y protección para centros estéticos",
   icons: {
-    icon: "/logodistsin.ico",
-    shortcut: "/logodistsin.ico",
-    apple: "/logodistsin.ico",
+    icon: [
+      { url: "/favicon_io DISTRIESTHETIC/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon_io DISTRIESTHETIC/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon_io DISTRIESTHETIC/favicon.ico",
+    apple: "/favicon_io DISTRIESTHETIC/apple-touch-icon.png",
   },
 };
 
