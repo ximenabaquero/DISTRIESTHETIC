@@ -133,32 +133,34 @@ export default function AdminPage() {
 
       {loggedIn && isAdmin && (
         <div className="space-y-6">
-          {/* Navegación por tabs */}
-          <nav className="flex gap-1 border-b border-gray-200">
-            {NAV_ITEMS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setSection(item.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-                  section === item.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-                {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'sin_entregar').length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
-                    {pedidos.filter(p => p.estado === 'sin_entregar').length}
-                  </span>
-                )}
-                {item.id === 'mensajes' && mensajes.filter(m => !m.leido).length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-blue-500 text-white rounded-full">
-                    {mensajes.filter(m => !m.leido).length}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* Navegación por tabs — scrollable en móvil */}
+          <nav className="-mx-4 sm:mx-0 overflow-x-auto border-b border-gray-200">
+            <div className="flex min-w-max px-4 sm:px-0">
+              {NAV_ITEMS.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setSection(item.id)}
+                  className={`relative flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
+                    section === item.id
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                  {item.id === 'pedidos' && pedidos.filter(p => p.estado === 'sin_entregar').length > 0 && (
+                    <span className="absolute top-1 right-1 sm:static sm:ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
+                      {pedidos.filter(p => p.estado === 'sin_entregar').length}
+                    </span>
+                  )}
+                  {item.id === 'mensajes' && mensajes.filter(m => !m.leido).length > 0 && (
+                    <span className="absolute top-1 right-1 sm:static sm:ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-blue-500 text-white rounded-full">
+                      {mensajes.filter(m => !m.leido).length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </nav>
 
           {/* Dashboard */}

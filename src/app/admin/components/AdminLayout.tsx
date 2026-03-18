@@ -9,7 +9,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, loggedIn, onLogout, sessionEmail }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen w-full bg-slate-50 overflow-x-hidden">
       {/* Usar la navegación unificada del sitio */}
 
       {/* Admin info bar - Barra de información del admin debajo de la nav principal */}
