@@ -484,10 +484,10 @@ function StepPago({
 }) {
   const { items, total, itemCount, clearCart } = useCart();
   const { whatsapp } = useContactInfo();
-  const [wompiLoading, setWompiLoading] = useState(false);
+  const [mpLoading, setMpLoading] = useState(false);
   const [whatsappLoading, setWhatsappLoading] = useState(false);
 
-  const wompiDisponible = total > 0 && !!process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY;
+  const mpDisponible = total > 0 && !!process.env.NEXT_PUBLIC_MP_ENABLED;
 
   const handleEnviarWhatsApp = async () => {
     if (whatsappLoading) return;
@@ -551,40 +551,43 @@ function StepPago({
     });
   };
 
-  // ── handlePagarWompi: flujo de pago online en 4 pasos ───────────────────────
-  // El orden importa: cada paso depende del anterior.
-  const handlePagarWompi = async () => {
-    if (total === 0 || wompiLoading) return;
-    setWompiLoading(true);
+  // ── handlePagarMercadoPago: flujo de pago online con Checkout Pro ───────────────────
+  // 1. El servidor crea la preferencia en MP y devuelve checkout_url + reference.
+  // 2. Se crea el pedido en la BD con la reference antes de redirigir.
+  // 3. El usuario es redirigido a la URL de MP para completar el pago.
+  // 4. MP redirige de vuelta a /pago?status=approved con los parámetros del resultado.
+  // 5. El webhook de MP actualiza el estado del pedido a 'entregado' si es aprobado.
+  const handlePagarMercadoPago = async () => {
+    if (total === 0 || mpLoading) return;
+    setMpLoading(true);
 
     try {
-      // PASO 1: Generar referencia única para este pedido.
-      // Date.now() da el timestamp en milisegundos → número casi siempre único.
-      // Math.random().toString(36) genera letras/números aleatorios en base 36.
-      // Juntos forman algo como "DIST-1710001234567-A3K9X"
-      const reference = `DIST-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-      const amountInCents = total * 100; // Wompi trabaja en centavos, no en pesos
-
-      // PASO 2: Pedir la firma de integridad al servidor.
-      // La firma se calcula con el secreto de Wompi (que solo el servidor conoce).
-      // Sin la firma, Wompi rechaza el pago → no se puede falsificar el monto.
-      const sigRes = await fetch("/api/payments/wompi-signature", {
+      // PASO 1: Crear preferencia en MP — el servidor genera la reference
+      const prefRes = await fetch("/api/payments/mercadopago-preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference, amountInCents }),
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            id: i.producto.id,
+            nombre: i.producto.nombre,
+            precio: i.producto.precio,
+            cantidad: i.cantidad,
+          })),
+          total,
+          delivery,
+        }),
       });
 
-      if (!sigRes.ok) {
+      if (!prefRes.ok) {
         alert("Error al iniciar el pago. Intenta nuevamente.");
         return;
       }
 
-      const { signature } = await sigRes.json();
+      const { checkout_url, reference } = await prefRes.json();
 
-      // PASO 3: Crear el pedido en la BD ANTES de redirigir.
+      // PASO 2: Crear el pedido en la BD ANTES de redirigir.
       // Si se crea después, el usuario podría cerrar la ventana y el pedido nunca
-      // quedaría registrado. Al crearlo antes con estado 'sin_entregar', el webhook
-      // de Wompi puede actualizarlo a 'entregado' cuando confirme el pago.
+      // quedaría registrado. El webhook de MP lo actualiza a 'entregado' al confirmar.
       await fetch("/api/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -596,8 +599,8 @@ function StepPago({
             cantidad: i.cantidad,
           })),
           total,
-          metodo_pago: "wompi",
-          referencia: reference, // enlazar el pedido con la transacción de Wompi
+          metodo_pago: "mercadopago",
+          referencia: reference,
           nombre: delivery.nombre,
           telefono: delivery.telefono,
           ciudad: delivery.ciudad,
@@ -606,33 +609,13 @@ function StepPago({
         }),
       });
 
-      // PASO 4: Limpiar el carrito y redirigir al checkout de Wompi.
-      // window.location.href hace una redirección completa (cambia la página).
+      // PASO 3: Limpiar carrito y redirigir al checkout de Mercado Pago
       clearCart();
-
-      const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY;
-      if (!publicKey) {
-        alert("Pago online no configurado. Usa la opción de WhatsApp.");
-        return;
-      }
-
-      // URLSearchParams construye la query string de forma segura (escapa caracteres especiales)
-      const params = new URLSearchParams({
-        "public-key": publicKey,
-        currency: "COP",
-        "amount-in-cents": String(amountInCents),
-        reference,
-        "signature:integrity": signature,
-        "redirect-url": `${window.location.origin}/pago`, // a dónde vuelve el usuario tras pagar
-      });
-
-      window.location.href = `https://checkout.wompi.co/p/?${params.toString()}`;
+      window.location.href = checkout_url;
     } catch {
       alert("Error de conexión. Intenta nuevamente.");
     } finally {
-      // finally siempre se ejecuta, tanto si hubo error como si no.
-      // Garantiza que el botón nunca quede atascado en estado "cargando".
-      setWompiLoading(false);
+      setMpLoading(false);
     }
   };
 
@@ -676,14 +659,14 @@ function StepPago({
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-3">
         <p className="text-sm font-semibold text-gray-700">¿Cómo quieres pagar?</p>
 
-        {/* Wompi */}
-        {wompiDisponible ? (
+        {/* Mercado Pago */}
+        {mpDisponible ? (
           <button
-            onClick={handlePagarWompi}
-            disabled={wompiLoading}
+            onClick={handlePagarMercadoPago}
+            disabled={mpLoading}
             className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm"
           >
-            {wompiLoading ? (
+            {mpLoading ? (
               <>
                 <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -696,7 +679,7 @@ function StepPago({
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
                 </svg>
-                Pagar online con Wompi
+                Pagar con Mercado Pago
               </>
             )}
           </button>

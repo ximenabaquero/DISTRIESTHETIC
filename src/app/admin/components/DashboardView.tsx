@@ -182,7 +182,7 @@ export default function DashboardView({ productos, pedidos, loadingPedidos }: Da
     {
       label: 'Pedidos hoy',
       value: loadingPedidos ? '—' : String(pedidosHoy.length),
-      sub: loadingPedidos ? 'Cargando...' : `${pedidosHoy.filter(p => p.metodoPago === 'wompi').length} Wompi · ${pedidosHoy.filter(p => p.metodoPago === 'whatsapp').length} WhatsApp`,
+      sub: loadingPedidos ? 'Cargando...' : `${pedidosHoy.filter(p => p.metodoPago === 'mercadopago').length} Mercado Pago · ${pedidosHoy.filter(p => p.metodoPago === 'whatsapp').length} WhatsApp`,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-500',
       icon: (

@@ -8,7 +8,7 @@ export type PedidoItem = {
 };
 
 export type PedidoEstado = 'sin_entregar' | 'entregado' | 'cancelado';
-export type PedidoMetodo = 'whatsapp' | 'wompi';
+export type PedidoMetodo = 'whatsapp' | 'mercadopago' | 'wompi';
 
 export interface Pedido {
   id: number;
@@ -59,7 +59,7 @@ async function getSupabase(): Promise<SupabaseClient> {
 // Supabase devuelve columnas en snake_case (created_at, metodo_pago)
 // pero el código usa camelCase (createdAt, metodoPago).
 // Los campos opcionales (nombre, telefono, etc.) pueden ser null en la BD
-// — esto es normal, pedidos de Wompi no siempre tienen todos los datos.
+// — esto es normal, pedidos de Mercado Pago no siempre tienen todos los datos.
 function mapRow(row: Record<string, unknown>): Pedido {
   return {
     id: Number(row.id),

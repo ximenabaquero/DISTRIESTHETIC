@@ -6,6 +6,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000')
   .filter(Boolean);
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   images: {
     remotePatterns: [
       {

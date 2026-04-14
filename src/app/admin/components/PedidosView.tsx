@@ -29,8 +29,9 @@ const estadoLabel: Record<PedidoEstado, string> = {
 };
 
 const metodoBadge: Record<PedidoMetodo, string> = {
-  wompi:    'bg-indigo-50 text-indigo-700',
-  whatsapp: 'bg-green-50 text-green-700',
+  mercadopago: 'bg-indigo-50 text-indigo-700',
+  whatsapp:    'bg-green-50 text-green-700',
+  wompi:       'bg-blue-50 text-blue-700',
 };
 
 // ── Botones de acción reutilizables ───────────────────────────────────────────
@@ -119,7 +120,7 @@ function PedidoCard({
             {estadoLabel[p.estado]}
           </span>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
-            {p.metodoPago === 'wompi' ? 'Wompi' : 'WhatsApp'}
+            {p.metodoPago === 'mercadopago' ? 'Mercado Pago' : 'WhatsApp'}
           </span>
         </div>
         <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
@@ -232,7 +233,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
           >
             <option value="todos">Todos</option>
             <option value="whatsapp">WhatsApp</option>
-            <option value="wompi">Wompi</option>
+            <option value="mercadopago">Mercado Pago</option>
           </select>
         </div>
 
@@ -385,7 +386,7 @@ export default function PedidosView({ pedidos, loading, onUpdateEstado, updating
                         <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">{fmt(p.total)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${metodoBadge[p.metodoPago]}`}>
-                            {p.metodoPago === 'wompi' ? 'Wompi' : 'WhatsApp'}
+                            {p.metodoPago === 'mercadopago' ? 'Mercado Pago' : 'WhatsApp'}
                           </span>
                         </td>
                         <td className="px-4 py-3">

@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (typeof total !== 'number' || total < 0 || total > 100_000_000) {
       return NextResponse.json({ ok: false, error: 'Total inválido.' }, { status: 400 });
     }
-    if (!['whatsapp', 'wompi'].includes(metodo_pago)) {
+    if (!['whatsapp', 'mercadopago'].includes(metodo_pago)) {
       return NextResponse.json({ ok: false, error: 'Método de pago inválido.' }, { status: 400 });
     }
     if (

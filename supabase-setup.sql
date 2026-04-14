@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   items       JSONB        NOT NULL DEFAULT '[]',
   total       NUMERIC(14,2) NOT NULL DEFAULT 0,
   metodo_pago TEXT         NOT NULL DEFAULT 'whatsapp'
-                CHECK (metodo_pago IN ('whatsapp', 'wompi')),
+                CHECK (metodo_pago IN ('whatsapp', 'mercadopago')),
   estado      TEXT         NOT NULL DEFAULT 'sin_entregar'
                 CHECK (estado IN ('sin_entregar', 'entregado', 'cancelado')),
   referencia  TEXT         NULL,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   notas       TEXT         NULL
 );
 
--- Índice para lookup rápido por referencia (Wompi webhook)
+-- Índice para lookup rápido por referencia (webhook de Mercado Pago)
 CREATE INDEX IF NOT EXISTS pedidos_referencia_idx ON pedidos (referencia)
   WHERE referencia IS NOT NULL;
 
@@ -101,7 +101,7 @@ CREATE POLICY "mensajes_insert_public"
   ON mensajes_contacto FOR INSERT WITH CHECK (true);
 
 -- Pedidos: inserción pública (el cliente crea el pedido al hacer checkout).
--- Lectura y actualización van por service_role (admin + webhook de Wompi).
+-- Lectura y actualización van por service_role (admin + webhook de Mercado Pago).
 CREATE POLICY "pedidos_insert_public"
   ON pedidos FOR INSERT WITH CHECK (true);
 
