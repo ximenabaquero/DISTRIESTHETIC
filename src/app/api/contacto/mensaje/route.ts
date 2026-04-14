@@ -1,17 +1,5 @@
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-let supabase: SupabaseClient | null = null;
-
-async function getSupabase(): Promise<SupabaseClient | null> {
-  if (supabase) return supabase;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  const { createClient } = await import("@supabase/supabase-js");
-  supabase = createClient(url, key, { auth: { persistSession: false } });
-  return supabase;
-}
+import { getPool } from "@/lib/dbClient";
 
 export async function POST(req: Request) {
   try {
@@ -36,32 +24,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const sb = await getSupabase();
-    if (!sb) {
-      return NextResponse.json(
-        { ok: false, error: "Servicio temporalmente no disponible." },
-        { status: 503 },
-      );
-    }
-
-    const { error } = await sb.from("mensajes_contacto").insert({
-      nombre,
-      email,
-      telefono: telefono || null,
-      mensaje,
-    });
-
-    if (error) {
-      console.error("[contacto/mensaje] Error guardando mensaje:", error.message);
-      return NextResponse.json(
-        { ok: false, error: "No se pudo guardar el mensaje. Intenta de nuevo." },
-        { status: 500 },
-      );
-    }
+    const pool = getPool();
+    await pool.query(
+      `INSERT INTO mensajes_contacto (nombre, email, telefono, mensaje)
+       VALUES ($1, $2, $3, $4)`,
+      [nombre, email, telefono || null, mensaje],
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error inesperado";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    console.error("[contacto/mensaje] Error guardando mensaje:", message);
+    return NextResponse.json({ ok: false, error: "No se pudo guardar el mensaje. Intenta de nuevo." }, { status: 500 });
   }
 }

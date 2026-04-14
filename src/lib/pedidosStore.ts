@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { getPool } from '@/lib/dbClient';
 
 export type PedidoItem = {
   id: number;
@@ -37,34 +37,14 @@ export interface CreatePedidoData {
   notas?: string;
 }
 
-// ── Inicialización lazy del cliente Supabase ────────────────────────────────
-// A diferencia de productosStore, esta función LANZA UN ERROR si Supabase
-// no está configurado, en vez de devolver null.
-// Esto es intencional: los pedidos SIEMPRE necesitan base de datos.
-// Si no está configurado, es mejor fallar con un error claro que
-// silenciosamente no guardar pedidos.
-let supabase: SupabaseClient | null = null;
-
-async function getSupabase(): Promise<SupabaseClient> {
-  if (supabase) return supabase;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Supabase no configurado.');
-  const { createClient } = await import('@supabase/supabase-js');
-  supabase = createClient(url, key, { auth: { persistSession: false } });
-  return supabase;
-}
-
 // ── mapRow: convierte una fila de la base de datos al formato del código ────
-// Supabase devuelve columnas en snake_case (created_at, metodo_pago)
-// pero el código usa camelCase (createdAt, metodoPago).
-// Los campos opcionales (nombre, telefono, etc.) pueden ser null en la BD
-// — esto es normal, pedidos de Mercado Pago no siempre tienen todos los datos.
+// La BD usa snake_case (created_at, metodo_pago); el código usa camelCase.
+// Los campos JSONB (items) vienen ya parseados por el driver pg.
 function mapRow(row: Record<string, unknown>): Pedido {
   return {
     id: Number(row.id),
     createdAt: String(row.created_at),
-    items: (row.items as PedidoItem[]) ?? [], // si es null, usar array vacío
+    items: (row.items as PedidoItem[]) ?? [],
     total: Number(row.total),
     metodoPago: String(row.metodo_pago) as PedidoMetodo,
     estado: String(row.estado) as PedidoEstado,
@@ -78,116 +58,95 @@ function mapRow(row: Record<string, unknown>): Pedido {
 }
 
 export async function createPedido(data: CreatePedidoData): Promise<Pedido> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  // .insert() agrega una fila, .select() devuelve la fila insertada,
-  // .single() espera exactamente 1 resultado (lanza error si hay 0 o más)
-  const { data: inserted, error } = await sb
-    .from('pedidos')
-    .insert({
-      items: data.items,
-      total: data.total,
-      metodo_pago: data.metodoPago,
-      referencia: data.referencia ?? null,
-      estado: 'sin_entregar', // estado inicial siempre es sin_entregar
-      nombre: data.nombre ?? null,
-      telefono: data.telefono ?? null,
-      ciudad: data.ciudad ?? null,
-      direccion: data.direccion ?? null,
-      notas: data.notas ?? null,
-    })
-    .select()
-    .single();
+  const { rows } = await pool.query(
+    `INSERT INTO pedidos
+       (items, total, metodo_pago, referencia, estado, nombre, telefono, ciudad, direccion, notas)
+     VALUES ($1, $2, $3, $4, 'sin_entregar', $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [
+      JSON.stringify(data.items),
+      data.total,
+      data.metodoPago,
+      data.referencia ?? null,
+      data.nombre ?? null,
+      data.telefono ?? null,
+      data.ciudad ?? null,
+      data.direccion ?? null,
+      data.notas ?? null,
+    ],
+  );
 
-  if (error || !inserted) {
-    throw new Error(error?.message || 'Error creando pedido.');
-  }
-
-  return mapRow(inserted as Record<string, unknown>);
+  if (!rows[0]) throw new Error('Error creando pedido.');
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function getAllPedidos(): Promise<Pedido[]> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  const { data, error } = await sb
-    .from('pedidos')
-    .select('*')
-    .order('created_at', { ascending: false }); // más recientes primero
+  const { rows } = await pool.query(
+    'SELECT * FROM pedidos ORDER BY created_at DESC',
+  );
 
-  if (error || !data) {
-    console.error('[pedidosStore] Error obteniendo pedidos:', error?.message);
-    return [];
-  }
-
-  return data.map((row) => mapRow(row as Record<string, unknown>));
+  return rows.map((row) => mapRow(row as Record<string, unknown>));
 }
 
-// .single() vs .maybeSingle():
-// - .single() → espera exactamente 1 resultado; si no existe, lanza error
-// - .maybeSingle() → devuelve null si no encuentra nada, sin lanzar error
-// Se usa .single() cuando sabemos que el ID debe existir,
-// y .maybeSingle() cuando el registro podría no estar (ej: buscar por referencia)
 export async function getPedidoById(id: number): Promise<Pedido | null> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  const { data, error } = await sb
-    .from('pedidos')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { rows } = await pool.query(
+    'SELECT * FROM pedidos WHERE id=$1',
+    [id],
+  );
 
-  if (error || !data) return null;
-  return mapRow(data as Record<string, unknown>);
+  if (!rows[0]) return null;
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function getPedidoByReferencia(referencia: string): Promise<Pedido | null> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  const { data, error } = await sb
-    .from('pedidos')
-    .select('*')
-    .eq('referencia', referencia)
-    .maybeSingle(); // puede no existir si la referencia es inválida
+  const { rows } = await pool.query(
+    'SELECT * FROM pedidos WHERE referencia=$1',
+    [referencia],
+  );
 
-  if (error || !data) return null;
-  return mapRow(data as Record<string, unknown>);
+  if (!rows[0]) return null;
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function updatePedidoEstado(id: number, estado: PedidoEstado): Promise<Pedido | null> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  const { data: updated, error } = await sb
-    .from('pedidos')
-    .update({ estado })
-    .eq('id', id)
-    .select()
-    .single();
+  const { rows } = await pool.query(
+    'UPDATE pedidos SET estado=$1 WHERE id=$2 RETURNING *',
+    [estado, id],
+  );
 
-  if (error || !updated) {
-    console.error('[pedidosStore] Error actualizando estado:', error?.message);
+  if (!rows[0]) {
+    console.error('[pedidosStore] Error actualizando estado para id:', id);
     return null;
   }
 
-  return mapRow(updated as Record<string, unknown>);
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function updatePedidoEstadoByReferencia(
   referencia: string,
   estado: PedidoEstado,
 ): Promise<Pedido | null> {
-  const sb = await getSupabase();
+  const pool = getPool();
 
-  const { data: updated, error } = await sb
-    .from('pedidos')
-    .update({ estado })
-    .eq('referencia', referencia)
-    .select()
-    .single();
+  const { rows } = await pool.query(
+    'UPDATE pedidos SET estado=$1 WHERE referencia=$2 RETURNING *',
+    [estado, referencia],
+  );
 
-  if (error || !updated) {
-    console.error('[pedidosStore] Error actualizando estado por referencia:', error?.message);
+  if (!rows[0]) {
+    console.error('[pedidosStore] Error actualizando estado por referencia:', referencia);
     return null;
   }
 
-  return mapRow(updated as Record<string, unknown>);
+  return mapRow(rows[0] as Record<string, unknown>);
 }

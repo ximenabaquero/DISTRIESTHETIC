@@ -1,5 +1,5 @@
 import { productosBase, type Producto } from '@/data/productos';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { getPool } from '@/lib/dbClient';
 
 export type ProductoInfoUpdate = {
   nombre?: string | null;
@@ -9,31 +9,13 @@ export type ProductoInfoUpdate = {
   disponible?: boolean | null;
 };
 
-// ── Inicialización lazy (Singleton) ────────────────────────────────────────
-// "Singleton" significa que solo se crea UNA instancia del cliente Supabase
-// en toda la vida del servidor. Se guarda en esta variable de módulo.
-// La primera vez que se llama getSupabase(), se crea. Las siguientes veces
-// devuelve el mismo cliente ya creado, sin reconectarse.
-let supabase: SupabaseClient | null = null;
-
 // Flag para saber si ya sembramos los productos base.
 // Evita verificar la base de datos en cada request.
 let seeded = false;
 
-async function getSupabase(): Promise<SupabaseClient | null> {
-  if (supabase) return supabase; // ya existe → reusar
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null; // sin credenciales → sin base de datos
-  const { createClient } = await import('@supabase/supabase-js');
-  supabase = createClient(url, key, { auth: { persistSession: false } });
-  return supabase;
-}
-
 // ── mapRow: traduce una fila de la BD al tipo Producto del código ───────────
 // La base de datos usa snake_case (imagen_url, is_base) pero el código usa
 // camelCase (imagenUrl). Esta función hace la traducción.
-// También convierte strings a números, maneja nulls, etc.
 function mapRow(row: Record<string, unknown>): Producto {
   return {
     id: Number(row.id),
@@ -49,52 +31,51 @@ function mapRow(row: Record<string, unknown>): Producto {
 }
 
 // ── ensureSeeded: siembra los productos base si la tabla está vacía ─────────
-// "Sembrar" (seed) = insertar datos iniciales en la base de datos.
-// Esta función es IDEMPOTENTE: si los datos ya están, no hace nada.
-// Gracias a `upsert` (insert + update si existe), se puede llamar
-// múltiples veces sin crear duplicados.
-// El flag `seeded` evita hacer la consulta COUNT en cada request.
-async function ensureSeeded(sb: SupabaseClient): Promise<void> {
-  if (seeded) return; // ya se verificó antes → saltarse
+async function ensureSeeded(): Promise<void> {
+  if (seeded) return;
 
-  // Contar cuántos productos hay en la tabla
-  // `head: true` hace que solo devuelva el conteo sin traer los datos
-  const { count, error } = await sb
-    .from('productos')
-    .select('*', { count: 'exact', head: true });
+  const pool = getPool();
+  const { rows } = await pool.query<{ count: string }>('SELECT COUNT(*)::int AS count FROM productos');
+  const count = Number(rows[0]?.count ?? 0);
 
-  if (error) {
-    console.error('[productosStore] Error verificando semilla:', error.message);
+  if (count > 0) {
+    seeded = true;
     return;
   }
 
-  if (count !== null && count > 0) {
-    seeded = true; // ya hay datos → no sembrar
-    return;
-  }
+  // La tabla está vacía → insertar todos los productos base
+  const values = productosBase.map((p) => [
+    p.id,
+    p.nombre,
+    p.descripcion,
+    p.categoria,
+    p.disponible,
+    p.etiqueta,
+    p.precio,
+    p.stock,
+    p.imagenUrl ?? null,
+    true, // is_base
+  ]);
 
-  // La tabla está vacía → insertar todos los productos base del archivo productos.ts
-  const rows = productosBase.map((p) => ({
-    id: p.id,
-    nombre: p.nombre,
-    descripcion: p.descripcion,
-    categoria: p.categoria,
-    disponible: p.disponible,
-    etiqueta: p.etiqueta,
-    precio: p.precio,
-    stock: p.stock,
-    imagen_url: p.imagenUrl,
-    is_base: true, // marcar como producto base (no se puede eliminar desde el admin)
-  }));
+  // Construir INSERT con múltiples filas usando ON CONFLICT DO NOTHING (idempotente)
+  const placeholders = values
+    .map(
+      (_, i) =>
+        `($${i * 10 + 1}, $${i * 10 + 2}, $${i * 10 + 3}, $${i * 10 + 4}, $${i * 10 + 5}, $${i * 10 + 6}, $${i * 10 + 7}, $${i * 10 + 8}, $${i * 10 + 9}, $${i * 10 + 10})`,
+    )
+    .join(', ');
 
-  // upsert = "insert o update si ya existe" (idempotente)
-  // onConflict: 'id' → si ya existe un producto con ese id, actualizar
-  const { error: insertError } = await sb
-    .from('productos')
-    .upsert(rows, { onConflict: 'id' });
+  const flat = values.flat();
 
-  if (insertError) {
-    console.error('[productosStore] Error sembrando productos base:', insertError.message);
+  try {
+    await pool.query(
+      `INSERT INTO productos (id, nombre, descripcion, categoria, disponible, etiqueta, precio, stock, imagen_url, is_base)
+       VALUES ${placeholders}
+       ON CONFLICT (id) DO NOTHING`,
+      flat,
+    );
+  } catch (e) {
+    console.error('[productosStore] Error sembrando productos base:', e);
   }
 
   seeded = true;
@@ -103,201 +84,196 @@ async function ensureSeeded(sb: SupabaseClient): Promise<void> {
 // ── API pública ─────────────────────────────────────────────────────────────
 
 export async function getAllProductos(): Promise<Producto[]> {
-  const sb = await getSupabase();
-  // Sin Supabase (desarrollo sin .env) → devolver los productos base del código
-  if (!sb) return [...productosBase];
+  const pool = getPool();
 
-  await ensureSeeded(sb); // asegurar que existan datos antes de leer
-
-  // Supabase devuelve { data, error }
-  // data = array de filas si todo salió bien
-  // error = objeto con mensaje si algo falló
-  const { data, error } = await sb
-    .from('productos')
-    .select('*')
-    .order('id', { ascending: true });
-
-  if (error || !data) {
-    console.error('[productosStore] Error obteniendo productos:', error?.message);
-    return [...productosBase]; // fallback a datos del código si falla la BD
+  try {
+    await ensureSeeded();
+    const { rows } = await pool.query('SELECT * FROM productos ORDER BY id ASC');
+    return rows.map((row) => mapRow(row as Record<string, unknown>));
+  } catch (e) {
+    console.error('[productosStore] Error obteniendo productos:', e);
+    return [...productosBase];
   }
-
-  return data.map((row) => mapRow(row as Record<string, unknown>));
 }
 
 export async function bulkUpdate(
   list: Array<{ id: number; precio: number | null; stock: number }>,
 ): Promise<Producto[]> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  // Promise.all ejecuta todos los updates EN PARALELO, no uno por uno.
-  // Si hubiera 50 productos, sin Promise.all tardaría 50 × tiempo_de_BD.
-  // Con Promise.all, todos corren al mismo tiempo → mucho más rápido.
   await Promise.all(
     list.map((item) =>
-      sb
-        .from('productos')
-        .update({ precio: item.precio, stock: item.stock })
-        .eq('id', item.id),
+      pool.query('UPDATE productos SET precio=$1, stock=$2 WHERE id=$3', [
+        item.precio,
+        item.stock,
+        item.id,
+      ]),
     ),
   );
 
-  // Devolver la lista actualizada desde la base de datos
   return getAllProductos();
 }
 
 export async function createProducto(data: Omit<Producto, 'id'>): Promise<Producto> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  const { data: inserted, error } = await sb
-    .from('productos')
-    .insert({
-      nombre: data.nombre,
-      descripcion: data.descripcion,
-      categoria: data.categoria,
-      disponible: data.disponible,
-      etiqueta: data.etiqueta,
-      precio: data.precio,
-      stock: data.stock,
-      imagen_url: data.imagenUrl,
-      is_base: false, // es un producto extra agregado manualmente → se puede eliminar
-    })
-    .select()
-    .single();
+  const { rows } = await pool.query(
+    `INSERT INTO productos (nombre, descripcion, categoria, disponible, etiqueta, precio, stock, imagen_url, is_base)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+     RETURNING *`,
+    [
+      data.nombre,
+      data.descripcion,
+      data.categoria,
+      data.disponible,
+      data.etiqueta,
+      data.precio,
+      data.stock,
+      data.imagenUrl ?? null,
+    ],
+  );
 
-  if (error || !inserted) {
-    throw new Error(error?.message || 'Error creando producto.');
-  }
-
-  return mapRow(inserted as Record<string, unknown>);
+  if (!rows[0]) throw new Error('Error creando producto.');
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function updateProductoInfo(
   id: number,
   data: ProductoInfoUpdate,
 ): Promise<Producto | null> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  // Construir el objeto de actualización dinámicamente:
-  // solo incluir los campos que realmente se quieren cambiar (no son null/undefined).
-  // Así no sobreescribimos accidentalmente campos que no se modificaron.
-  const updates: Record<string, unknown> = {};
-  if (data.nombre !== undefined && data.nombre !== null) updates.nombre = data.nombre;
-  if (data.descripcion !== undefined && data.descripcion !== null) updates.descripcion = data.descripcion;
-  if (data.categoria !== undefined && data.categoria !== null) updates.categoria = data.categoria;
-  if (data.etiqueta !== undefined && data.etiqueta !== null) updates.etiqueta = data.etiqueta;
-  if (data.disponible !== undefined && data.disponible !== null) updates.disponible = data.disponible;
+  // Construir SET dinámico solo con los campos que se quieren cambiar
+  const sets: string[] = [];
+  const params: unknown[] = [];
 
-  if (Object.keys(updates).length === 0) return null; // nada que actualizar
+  if (data.nombre !== undefined && data.nombre !== null) {
+    params.push(data.nombre);
+    sets.push(`nombre=$${params.length}`);
+  }
+  if (data.descripcion !== undefined && data.descripcion !== null) {
+    params.push(data.descripcion);
+    sets.push(`descripcion=$${params.length}`);
+  }
+  if (data.categoria !== undefined && data.categoria !== null) {
+    params.push(data.categoria);
+    sets.push(`categoria=$${params.length}`);
+  }
+  if (data.etiqueta !== undefined && data.etiqueta !== null) {
+    params.push(data.etiqueta);
+    sets.push(`etiqueta=$${params.length}`);
+  }
+  if (data.disponible !== undefined && data.disponible !== null) {
+    params.push(data.disponible);
+    sets.push(`disponible=$${params.length}`);
+  }
 
-  const { data: updated, error } = await sb
-    .from('productos')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
+  if (sets.length === 0) return null;
 
-  if (error || !updated) return null;
-  return mapRow(updated as Record<string, unknown>);
+  params.push(id);
+  const { rows } = await pool.query(
+    `UPDATE productos SET ${sets.join(', ')} WHERE id=$${params.length} RETURNING *`,
+    params,
+  );
+
+  if (!rows[0]) return null;
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function setProductoImagen(
   id: number,
   imagenUrl: string | null,
 ): Promise<Producto | null> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  const { data: updated, error } = await sb
-    .from('productos')
-    .update({ imagen_url: imagenUrl }) // null = quitar la imagen
-    .eq('id', id)
-    .select()
-    .single();
+  const { rows } = await pool.query(
+    'UPDATE productos SET imagen_url=$1 WHERE id=$2 RETURNING *',
+    [imagenUrl, id],
+  );
 
-  if (error || !updated) {
-    console.error('[productosStore] Error actualizando imagen:', error?.message, { id, imagenUrl });
+  if (!rows[0]) {
+    console.error('[productosStore] Error actualizando imagen para id:', id);
     return null;
   }
-  return mapRow(updated as Record<string, unknown>);
+  return mapRow(rows[0] as Record<string, unknown>);
 }
 
 export async function deleteProducto(id: number): Promise<Producto | null> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  // Primero verificar que el producto existe y que no es un producto base
-  const { data: current, error: fetchError } = await sb
-    .from('productos')
-    .select('*')
-    .eq('id', id)
-    .single();
+  // Verificar que existe y no es producto base
+  const { rows: found } = await pool.query(
+    'SELECT * FROM productos WHERE id=$1',
+    [id],
+  );
 
-  if (fetchError || !current) return null;
+  if (!found[0]) return null;
+  if ((found[0] as Record<string, unknown>).is_base) return null;
 
-  // Los productos base (is_base = true) no se pueden eliminar
-  // para que el catálogo siempre tenga los productos originales
-  if ((current as Record<string, unknown>).is_base) return null;
-
-  const { error } = await sb.from('productos').delete().eq('id', id);
-  if (error) throw new Error(error.message);
-
-  return mapRow(current as Record<string, unknown>);
+  await pool.query('DELETE FROM productos WHERE id=$1', [id]);
+  return mapRow(found[0] as Record<string, unknown>);
 }
 
 export async function decrementarStock(
   items: Array<{ id: number; cantidad: number }>,
 ): Promise<void> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
+  const client = await pool.connect();
 
-  // No se puede decrementar directamente con SQL desde el cliente de Supabase
-  // sin funciones de base de datos. El proceso es:
-  // 1. Leer los stocks actuales de todos los productos del pedido
-  // 2. Calcular el nuevo stock (actual - cantidad pedida, mínimo 0)
-  // 3. Actualizar todos en paralelo
-  const ids = items.map(i => i.id);
-  const { data, error } = await sb.from('productos').select('id, stock').in('id', ids);
-  if (error || !data) {
-    console.error('[productosStore] Error obteniendo stock para decrementar:', error?.message);
-    return;
+  try {
+    await client.query('BEGIN');
+
+    const ids = items.map((i) => i.id);
+    const { rows } = await client.query<{ id: number; stock: number }>(
+      'SELECT id, stock FROM productos WHERE id = ANY($1) FOR UPDATE',
+      [ids],
+    );
+
+    const stockMap = new Map(rows.map((r) => [Number(r.id), Number(r.stock)]));
+
+    await Promise.all(
+      items.map((item) => {
+        const current = stockMap.get(item.id) ?? 0;
+        const newStock = Math.max(0, current - item.cantidad);
+        return client.query('UPDATE productos SET stock=$1 WHERE id=$2', [newStock, item.id]);
+      }),
+    );
+
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('[productosStore] Error decrementando stock:', e);
+  } finally {
+    client.release();
   }
-
-  // Convertir a Map para buscar stock por id en O(1) en vez de O(n)
-  const stockMap = new Map(data.map(r => [Number(r.id), Number(r.stock)]));
-
-  // Actualizar todos los stocks en paralelo
-  await Promise.all(
-    items.map(item => {
-      const current = stockMap.get(item.id) ?? 0;
-      const newStock = Math.max(0, current - item.cantidad); // nunca menor que 0
-      return sb.from('productos').update({ stock: newStock }).eq('id', item.id);
-    }),
-  );
 }
 
-// Alias conservado por compatibilidad con updateProducto individual
 export async function updateProducto(
   id: number,
   data: Partial<Pick<Producto, 'precio' | 'stock'>>,
 ): Promise<Producto | null> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado.');
+  const pool = getPool();
 
-  const updates: Record<string, unknown> = {};
-  if (data.precio !== undefined) updates.precio = data.precio;
-  if (data.stock !== undefined) updates.stock = data.stock;
+  const sets: string[] = [];
+  const params: unknown[] = [];
 
-  const { data: updated, error } = await sb
-    .from('productos')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
+  if (data.precio !== undefined) {
+    params.push(data.precio);
+    sets.push(`precio=$${params.length}`);
+  }
+  if (data.stock !== undefined) {
+    params.push(data.stock);
+    sets.push(`stock=$${params.length}`);
+  }
 
-  if (error || !updated) return null;
-  return mapRow(updated as Record<string, unknown>);
+  if (sets.length === 0) return null;
+
+  params.push(id);
+  const { rows } = await pool.query(
+    `UPDATE productos SET ${sets.join(', ')} WHERE id=$${params.length} RETURNING *`,
+    params,
+  );
+
+  if (!rows[0]) return null;
+  return mapRow(rows[0] as Record<string, unknown>);
 }

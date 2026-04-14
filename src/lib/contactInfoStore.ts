@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { getPool } from '@/lib/dbClient';
 
 export interface ContactInfo {
   telefono: string;
@@ -12,46 +12,39 @@ const defaults: ContactInfo = {
   email: '',
 };
 
-let supabase: SupabaseClient | null = null;
-
-async function getSupabase(): Promise<SupabaseClient | null> {
-  if (supabase) return supabase;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  const { createClient } = await import('@supabase/supabase-js');
-  supabase = createClient(url, key, { auth: { persistSession: false } });
-  return supabase;
-}
-
 export async function getContactInfo(): Promise<ContactInfo> {
-  const sb = await getSupabase();
-  if (!sb) return defaults;
+  const pool = getPool();
 
-  const { data, error } = await sb
-    .from('contact_info')
-    .select('telefono, whatsapp, email')
-    .eq('id', 1)
-    .single();
+  try {
+    const { rows } = await pool.query(
+      'SELECT telefono, whatsapp, email FROM contact_info WHERE id=1',
+    );
 
-  if (error || !data) {
-    // Fila no existe aún, crearla con los valores por defecto
-    await sb
-      .from('contact_info')
-      .upsert({ id: 1, ...defaults }, { onConflict: 'id' });
+    if (!rows[0]) {
+      // Fila no existe aún → crearla con valores por defecto
+      await pool.query(
+        `INSERT INTO contact_info (id, telefono, whatsapp, email)
+         VALUES (1, $1, $2, $3)
+         ON CONFLICT (id) DO NOTHING`,
+        [defaults.telefono, defaults.whatsapp, defaults.email],
+      );
+      return defaults;
+    }
+
+    const row = rows[0] as Record<string, unknown>;
+    return {
+      telefono: String(row.telefono ?? '').trim() || defaults.telefono,
+      whatsapp: String(row.whatsapp ?? '').trim() || defaults.whatsapp,
+      email: String(row.email ?? '').trim(),
+    };
+  } catch (e) {
+    console.error('[contactInfoStore] Error obteniendo contact info:', e);
     return defaults;
   }
-
-  return {
-    telefono: (data.telefono as string)?.trim() || defaults.telefono,
-    whatsapp: (data.whatsapp as string)?.trim() || defaults.whatsapp,
-    email: (data.email as string)?.trim() || '',
-  };
 }
 
 export async function updateContactInfo(info: ContactInfo): Promise<ContactInfo> {
-  const sb = await getSupabase();
-  if (!sb) throw new Error('Supabase no configurado. Verificar SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY.');
+  const pool = getPool();
 
   const sanitized: ContactInfo = {
     telefono: info.telefono.trim(),
@@ -59,10 +52,12 @@ export async function updateContactInfo(info: ContactInfo): Promise<ContactInfo>
     email: info.email.trim(),
   };
 
-  const { error } = await sb
-    .from('contact_info')
-    .upsert({ id: 1, ...sanitized }, { onConflict: 'id' });
+  await pool.query(
+    `INSERT INTO contact_info (id, telefono, whatsapp, email)
+     VALUES (1, $1, $2, $3)
+     ON CONFLICT (id) DO UPDATE SET telefono=$1, whatsapp=$2, email=$3`,
+    [sanitized.telefono, sanitized.whatsapp, sanitized.email],
+  );
 
-  if (error) throw new Error(error.message);
   return sanitized;
 }

@@ -1,82 +1,62 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { createClient } from '@supabase/supabase-js';
-
-const BUCKET = 'product-images';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
+import { getPool } from '@/lib/dbClient';
+import path from 'path';
 
 export async function POST() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
   }
 
-  const sb = getSupabase();
+  const { promises: fs } = await import('fs');
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
-  // 1. Obtener todas las URLs de imagen guardadas en la tabla productos
-  const { data: productos, error: prodError } = await sb
-    .from('productos')
-    .select('imagen_url')
-    .not('imagen_url', 'is', null);
-
-  if (prodError) {
-    return NextResponse.json({ ok: false, error: prodError.message }, { status: 500 });
-  }
-
+  // 1. Obtener todas las URLs de imagen activas en la BD
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT imagen_url FROM productos WHERE imagen_url IS NOT NULL`,
+  );
   const urlsActivas = new Set(
-    (productos ?? []).map(p => p.imagen_url).filter(Boolean)
+    rows.map((r: Record<string, unknown>) => r.imagen_url as string).filter(Boolean),
   );
 
-  // 2. Listar todas las carpetas (producto-1, producto-2, ...) en el bucket
-  const { data: carpetas, error: carpetasError } = await sb.storage
-    .from(BUCKET)
-    .list('', { limit: 1000 });
-
-  if (carpetasError) {
-    return NextResponse.json({ ok: false, error: carpetasError.message }, { status: 500 });
+  // 2. Listar archivos en /public/uploads
+  let archivos: string[] = [];
+  try {
+    archivos = await fs.readdir(uploadsDir);
+  } catch {
+    // La carpeta puede no existir si nunca se subió ninguna imagen
+    return NextResponse.json({ ok: true, eliminados: 0, mensaje: 'No hay carpeta de uploads.' });
   }
 
-  const archivosHuerfanos: string[] = [];
-
-  // 3. Por cada carpeta, listar sus archivos y detectar huérfanos
-  for (const carpeta of carpetas ?? []) {
-    const { data: archivos } = await sb.storage
-      .from(BUCKET)
-      .list(carpeta.name, { limit: 1000 });
-
-    for (const archivo of archivos ?? []) {
-      const storagePath = `${carpeta.name}/${archivo.name}`;
-      const { data } = sb.storage.from(BUCKET).getPublicUrl(storagePath);
-      const publicUrl = data.publicUrl;
-
-      // Si la URL pública no está entre las activas → es huérfana
-      if (!urlsActivas.has(publicUrl)) {
-        archivosHuerfanos.push(storagePath);
-      }
+  // 3. Detectar archivos huérfanos (no referenciados en la BD)
+  const huerfanos: string[] = [];
+  for (const archivo of archivos) {
+    const urlRelativa = `/uploads/${archivo}`;
+    if (!urlsActivas.has(urlRelativa)) {
+      huerfanos.push(archivo);
     }
   }
 
-  if (archivosHuerfanos.length === 0) {
+  if (huerfanos.length === 0) {
     return NextResponse.json({ ok: true, eliminados: 0, mensaje: 'No hay imágenes huérfanas.' });
   }
 
   // 4. Borrar los huérfanos
-  const { error: deleteError } = await sb.storage
-    .from(BUCKET)
-    .remove(archivosHuerfanos);
-
-  if (deleteError) {
-    return NextResponse.json({ ok: false, error: deleteError.message }, { status: 500 });
+  const errores: string[] = [];
+  for (const archivo of huerfanos) {
+    try {
+      await fs.unlink(path.join(uploadsDir, archivo));
+    } catch {
+      errores.push(archivo);
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    eliminados: archivosHuerfanos.length,
-    archivos: archivosHuerfanos,
-    mensaje: `Se eliminaron ${archivosHuerfanos.length} imagen(es) huérfana(s).`,
+    eliminados: huerfanos.length - errores.length,
+    archivos: huerfanos,
+    ...(errores.length > 0 ? { errores } : {}),
+    mensaje: `Se eliminaron ${huerfanos.length - errores.length} imagen(es) huérfana(s).`,
   });
 }

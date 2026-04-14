@@ -1,36 +1,21 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/dbClient";
 
-let supabase: SupabaseClient | null = null;
-
-async function getSupabase(): Promise<SupabaseClient | null> {
-  if (supabase) return supabase;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  const { createClient } = await import("@supabase/supabase-js");
-  supabase = createClient(url, key, { auth: { persistSession: false } });
-  return supabase;
-}
-
-export async function GET(req: Request) {
+export async function GET() {
   if (!(await requireAdmin())) {
     return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 });
   }
 
-  const sb = await getSupabase();
-  if (!sb) return NextResponse.json({ ok: false, error: "Sin configuración de base de datos." }, { status: 503 });
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT id, nombre, email, telefono, mensaje, leido, created_at
+     FROM mensajes_contacto
+     ORDER BY created_at DESC
+     LIMIT 200`,
+  );
 
-  const { data, error } = await sb
-    .from("mensajes_contacto")
-    .select("id, nombre, email, telefono, mensaje, leido, created_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, mensajes: data });
+  return NextResponse.json({ ok: true, mensajes: rows });
 }
 
 export async function PATCH(req: Request) {
@@ -43,19 +28,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: false, error: "Parámetros inválidos." }, { status: 400 });
   }
 
-  const sb = await getSupabase();
-  if (!sb) return NextResponse.json({ ok: false, error: "Sin configuración." }, { status: 503 });
+  const pool = getPool();
+  const { rows } = await pool.query(
+    'UPDATE mensajes_contacto SET leido=$1 WHERE id=$2 RETURNING *',
+    [leido, id],
+  );
 
-  const { data, error } = await sb
-    .from("mensajes_contacto")
-    .update({ leido })
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, mensaje: data });
+  return NextResponse.json({ ok: true, mensaje: rows[0] ?? null });
 }
 
 export async function DELETE(req: Request) {
@@ -67,11 +46,8 @@ export async function DELETE(req: Request) {
   const id = Number(searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "ID requerido." }, { status: 400 });
 
-  const sb = await getSupabase();
-  if (!sb) return NextResponse.json({ ok: false, error: "Sin configuración." }, { status: 503 });
-
-  const { error } = await sb.from("mensajes_contacto").delete().eq("id", id);
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  const pool = getPool();
+  await pool.query('DELETE FROM mensajes_contacto WHERE id=$1', [id]);
 
   return NextResponse.json({ ok: true });
 }
