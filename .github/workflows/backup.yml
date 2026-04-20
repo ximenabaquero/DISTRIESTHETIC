@@ -1,0 +1,68 @@
+name: Backup Supabase
+
+on:
+  # Backup automático cada lunes a las 3am UTC (10pm Colombia)
+  schedule:
+    - cron: '0 3 * * 1'
+  # Botón para ejecutar manualmente desde GitHub → Actions
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Crear carpeta de backup
+        run: mkdir -p backup
+
+      - name: Exportar productos
+        run: |
+          curl -sf \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/productos?select=*&order=id.asc&limit=10000" \
+            -o backup/productos.json
+          echo "Productos: $(cat backup/productos.json | wc -c) bytes"
+
+      - name: Exportar pedidos
+        run: |
+          curl -sf \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/pedidos?select=*&order=created_at.desc&limit=10000" \
+            -o backup/pedidos.json
+          echo "Pedidos: $(cat backup/pedidos.json | wc -c) bytes"
+
+      - name: Exportar contact_info
+        run: |
+          curl -sf \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/contact_info?select=*" \
+            -o backup/contact_info.json
+          echo "Contact info: $(cat backup/contact_info.json | wc -c) bytes"
+
+      - name: Exportar mensajes de contacto
+        run: |
+          curl -sf \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/mensajes_contacto?select=*&order=created_at.desc&limit=10000" \
+            -o backup/mensajes_contacto.json
+          echo "Mensajes: $(cat backup/mensajes_contacto.json | wc -c) bytes"
+
+      - name: Crear archivo de metadata
+        run: |
+          echo '{
+            "fecha": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+            "tablas": ["productos", "pedidos", "contact_info", "mensajes_contacto"]
+          }' > backup/meta.json
+
+      - name: Subir backup como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Nombre incluye la fecha para identificarlo fácilmente
+          name: backup-${{ github.run_number }}-${{ github.run_id }}
+          path: backup/
+          # Se guarda 90 días (máximo en el plan gratuito de GitHub)
+          retention-days: 90

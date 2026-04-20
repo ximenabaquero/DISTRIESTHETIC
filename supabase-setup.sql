@@ -32,12 +32,16 @@ CREATE TABLE IF NOT EXISTS contact_info (
   id        INTEGER PRIMARY KEY DEFAULT 1,
   telefono  TEXT    NOT NULL DEFAULT '304 683 1493',
   whatsapp  TEXT    NOT NULL DEFAULT '573046831493',
+  email     TEXT    NOT NULL DEFAULT '',
   CONSTRAINT single_row CHECK (id = 1)
 );
 
+-- Agregar columna email si ya existe la tabla sin ella
+ALTER TABLE contact_info ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT '';
+
 -- Insertar fila inicial si no existe
-INSERT INTO contact_info (id, telefono, whatsapp)
-VALUES (1, '304 683 1493', '573046831493')
+INSERT INTO contact_info (id, telefono, whatsapp, email)
+VALUES (1, '304 683 1493', '573046831493', '')
 ON CONFLICT (id) DO NOTHING;
 
 -- ──────────────────────────────────────────────────────────────

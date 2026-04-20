@@ -18,7 +18,7 @@ export async function GET() {
       const { createClient } = await import('@supabase/supabase-js');
       const client = createClient(supabaseUrl as string, serviceKey as string, { auth: { persistSession: false } });
       const { count, error } = await client
-        .from('productos_overrides')
+        .from('productos')
         .select('id', { count: 'exact', head: true });
       if (error) {
         errorMessage = error.message;

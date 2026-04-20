@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       id: String(i.id),
       title: i.nombre.slice(0, 256),
       quantity: i.cantidad,
-      unit_price: i.precio as number,
+      unit_price: Math.round(i.precio as number), // COP no tiene centavos
       currency_id: "COP",
     }));
 
@@ -61,15 +61,28 @@ export async function POST(request: NextRequest) {
             id: "pedido",
             title: "Pedido DistriEsthetic",
             quantity: 1,
-            unit_price: total,
+            unit_price: Math.round(total), // COP no tiene centavos
             currency_id: "COP",
           },
         ];
 
   // Detectar la base URL desde los headers de la request
-  const host = request.headers.get("host") ?? "";
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
-  const baseUrl = `${proto}://${host}`;
+  // En desarrollo local, usar ngrok si está disponible
+  let baseUrl = process.env.MP_NGROK_URL;
+  
+  if (!baseUrl) {
+    const host = request.headers.get("host") ?? "localhost:3000";
+    const proto = request.headers.get("x-forwarded-proto") ?? "https";
+    
+    // Si es localhost/127.0.0.1 y no hay ngrok, usar una URL placeholder de MP
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      baseUrl = "https://localhost.example.com"; // URL dummy para desarrollo sin ngrok
+    } else {
+      baseUrl = `${proto}://${host}`;
+    }
+  }
+  
+  console.log(`[mp-preference] baseUrl: ${baseUrl}`);
 
   try {
     const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -99,8 +112,13 @@ export async function POST(request: NextRequest) {
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("[mp-preference] Error de MP:", err);
-      return NextResponse.json({ error: "Error creando preferencia de pago" }, { status: 500 });
+      console.error("[mp-preference] Error de MP:", res.status, err);
+      // En desarrollo mostrar el error real para poder diagnosticar
+      const isDev = process.env.NODE_ENV !== "production";
+      return NextResponse.json(
+        { error: "Error creando preferencia de pago", ...(isDev && { mp_error: err, mp_status: res.status }) },
+        { status: 500 },
+      );
     }
 
     const data = await res.json();
