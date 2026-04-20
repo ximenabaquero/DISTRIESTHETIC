@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import SiteNav from '@/components/SiteNav';
-import Footer from '@/components/Footer';
+import Footer from "../components/index/Footer";
 import EkgDivider from '@/components/EkgDivider';
 
 interface BlogPost {
@@ -75,8 +74,6 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <SiteNav />
-
       <div className="flex-1">
         <div className="container mx-auto px-4 py-16 max-w-4xl">
           {/* Header */}
