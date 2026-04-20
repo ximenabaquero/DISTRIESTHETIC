@@ -82,7 +82,28 @@ CREATE INDEX IF NOT EXISTS pedidos_referencia_idx ON pedidos (referencia)
   WHERE referencia IS NOT NULL;
 
 -- ──────────────────────────────────────────────────────────────
--- 5. Row Level Security
+-- 5. Tabla blog (artículos de blog generados por n8n + OpenAI)
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS blog (
+  id          SERIAL       PRIMARY KEY,
+  titulo      TEXT         NOT NULL,
+  slug        TEXT         NOT NULL UNIQUE,
+  contenido   TEXT         NOT NULL,
+  imagen_url  TEXT         NULL,
+  estado      TEXT         NOT NULL DEFAULT 'publicado'
+                CHECK (estado IN ('borrador', 'publicado', 'archivado')),
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Índice para lookup rápido por slug
+CREATE INDEX IF NOT EXISTS blog_slug_idx ON blog (slug);
+
+-- Índice para listar posts publicados ordenados por fecha
+CREATE INDEX IF NOT EXISTS blog_estado_fecha_idx ON blog (estado, created_at DESC);
+
+-- ──────────────────────────────────────────────────────────────
+-- 6. Row Level Security
 -- ──────────────────────────────────────────────────────────────
 -- Las escrituras siempre van por rutas server-side con service_role
 -- (bypass RLS). La clave anon sólo necesita leer.
@@ -91,6 +112,7 @@ ALTER TABLE productos         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_info      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes_contacto ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedidos            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog               ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública (catálogo y contacto visibles para todos)
 CREATE POLICY "productos_select_public"
@@ -98,6 +120,13 @@ CREATE POLICY "productos_select_public"
 
 CREATE POLICY "contact_info_select_public"
   ON contact_info FOR SELECT USING (true);
+
+-- Blog: lectura pública solo posts publicados
+CREATE POLICY "blog_select_public"
+  ON blog FOR SELECT USING (estado = 'publicado');
+
+-- Blog: inserción + actualización + eliminación solo con service_role (server-side)
+-- N8N y Admin panel usan rutas server-side con service_role bypass
 
 -- Inserción pública (visitantes pueden enviar formulario de contacto)
 -- Las lecturas/borrados de mensajes van por service_role (admin server-side)
