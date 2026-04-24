@@ -25,7 +25,7 @@ export default function BlogView() {
     titulo: '',
     contenido: '',
     imagenUrl: '',
-    estado: 'publicado' as const,
+    estado: 'publicado' as 'borrador' | 'publicado' | 'archivado',
   });
 
   // Cargar posts
