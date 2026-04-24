@@ -255,6 +255,12 @@ export default function HeroSection() {
               >
                 Pedir por WhatsApp
               </Link>
+              <Link
+                href="/blog"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold text-slate-300 bg-white/[0.08] border border-white/[0.15] hover:bg-white/[0.12] hover:border-white/[0.25] rounded-xl transition-all"
+              >
+                Leer Blog
+              </Link>
             </motion.div>
 
             {/* Cert strip */}
