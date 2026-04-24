@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export function Footer() {
@@ -17,6 +19,14 @@ export function Footer() {
           </Link>
           <Link href="/contacto" className="text-gray-400 hover:text-white">
             Contacto
+          </Link>
+        </div>
+        <div className="flex justify-center space-x-6 mb-6 text-sm">
+          <Link href="/legal/politica-privacidad" className="text-gray-400 hover:text-white">
+            Política de Privacidad
+          </Link>
+          <Link href="/legal/terminos-condiciones" className="text-gray-400 hover:text-white">
+            Términos y Condiciones
           </Link>
         </div>
         <p className="text-gray-400 text-sm">

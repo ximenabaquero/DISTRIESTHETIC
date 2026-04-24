@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import SiteNav from '@/components/SiteNav';
-import Footer from '@/components/Footer';
+import { SiteNav } from '@/components/SiteNav';
+import { Footer } from '@/components/Footer';
 import EkgDivider from '@/components/EkgDivider';
 
 interface BlogPost {
