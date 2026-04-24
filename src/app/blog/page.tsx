@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import Footer from "../components/index/Footer";
+import { Footer } from '@/components/Footer';
 import EkgDivider from '@/components/EkgDivider';
 
 interface BlogPost {
@@ -16,7 +17,7 @@ interface BlogPost {
   createdAt: string;
 }
 
-export default function BlogPage() {
+function BlogPageContent() {
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get('page') ?? '1', 10);
 
@@ -206,5 +207,13 @@ export default function BlogPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
+      <BlogPageContent />
+    </Suspense>
   );
 }
