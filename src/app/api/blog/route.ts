@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { titulo?: string; contenido?: string; slug?: string; imagenUrl?: string; estado?: string };
+  let body: { titulo?: string; contenido?: string; slug?: string };
 
   try {
     body = await request.json();
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { titulo, contenido, slug, imagenUrl, estado } = body;
+  const { titulo, contenido, slug } = body;
 
   // Validar campos requeridos
   if (!titulo || typeof titulo !== 'string' || titulo.trim().length === 0) {
@@ -61,8 +61,7 @@ export async function POST(request: NextRequest) {
       titulo: titulo.trim(),
       contenido: contenido.trim(),
       slug,
-      imagenUrl,
-      estado: (estado as any) ?? 'publicado',
+      estado: 'publicado',
     });
 
     return NextResponse.json(post, { status: 201 });
