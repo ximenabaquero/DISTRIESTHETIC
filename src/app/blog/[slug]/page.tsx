@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { SiteNav } from '@/components/SiteNav';
-import { Footer } from '@/components/Footer';
 import EkgDivider from '@/components/EkgDivider';
 
 interface BlogPost {
@@ -69,7 +67,6 @@ export default function BlogDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <SiteNav />
 
       <div className="flex-1">
         <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -163,7 +160,6 @@ export default function BlogDetailPage() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }
