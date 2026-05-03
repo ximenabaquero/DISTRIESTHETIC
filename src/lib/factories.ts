@@ -14,6 +14,12 @@ const NOMBRES = [
   'Laura Fernández', 'Antonio Díaz', 'Isabel Moreno', 'Miguel Jiménez', 'Rosa Pérez',
   'Francisco Ruiz', 'Carmen Álvarez', 'Manuel Ramírez', 'Dolores Herrera', 'Diego Navarro',
   'Pilar Domínguez', 'Rafael Castro', 'Beatriz Romero', 'Sergio Molina', 'Verónica Cabrera',
+  // Nombres adicionales colombianos
+  'Valentina Torres', 'Sebastián Vargas', 'Juliana Ríos', 'Andrés Morales', 'Camila Ospina',
+  'Santiago Gómez', 'Daniela Restrepo', 'Felipe Cardona', 'Natalia Zapata', 'Alejandro Cano',
+  'Luisa Palacios', 'Nicolás Arbeláez', 'Paola Salazar', 'Cristian Muñoz', 'Adriana Castaño',
+  'Jhon Quintero', 'Melissa Agudelo', 'David Londoño', 'Marcela Giraldo', 'Esteban Velásquez',
+  'Carolina Montes', 'Mauricio Peñaloza', 'Angélica Bernal', 'Iván Rincón', 'Tatiana Suárez',
 ];
 
 const CIUDADES = [
@@ -62,6 +68,45 @@ function randomRef(type: 'mp' | 'wompi' | 'manual'): string {
   if (type === 'mp') return `MP-${Date.now()}-${randomInt(1000, 9999)}`;
   if (type === 'wompi') return `WP-${Date.now()}-${randomInt(1000, 9999)}`;
   return `MAN-${Date.now()}-${randomInt(1000, 9999)}`;
+}
+
+/**
+ * Genera una fecha ISO aleatoria entre dos fechas
+ */
+export function randomDateInRange(start: Date, end: Date): string {
+  const startMs = start.getTime();
+  const endMs = end.getTime();
+  return new Date(startMs + Math.random() * (endMs - startMs)).toISOString();
+}
+
+/**
+ * Selección aleatoria ponderada
+ * @param items - opciones a elegir
+ * @param weights - pesos (deben sumar 100 o cualquier total)
+ */
+export function weightedRandom<T>(items: T[], weights: number[]): T {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let rand = Math.random() * total;
+  for (let i = 0; i < items.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+/**
+ * Genera un email a partir del nombre completo
+ */
+export function randomEmail(nombre: string): string {
+  const slug = nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z0-9.]/g, '');
+  const suffix = randomInt(1, 999);
+  const dominios = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com'];
+  return `${slug}${suffix}@${random(dominios)}`;
 }
 
 // ── Factories ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,101 @@
+﻿id,fecha,mes,cliente,ciudad,telefono,direccion,estado,metodo_pago,num_items,total,referencia,notas
+1,2026-04-16 21:13:01,2026-04,Juan García,Santa Marta,+57 3374 223 4625,Calle 72 #59-63,sin_entregar,whatsapp,6,110000,WA-202604-0001,
+2,2026-04-16 10:18:51,2026-04,Isabel Moreno,Pasto,+57 3931 205 6817,Calle 186 #110-96,sin_entregar,whatsapp,2,76000,WA-202604-0002,Entregar en horario de oficina
+3,2026-02-17 20:37:55,2026-02,Miguel Jiménez,Cali,+57 3262 171 4234,Calle 54 #70-72,entregado,mercadopago,7,374000,MP-202602-0003,
+4,2026-02-23 03:57:55,2026-02,Dolores Herrera,Medellín,+57 3093 180 9462,Calle 196 #38-87,entregado,whatsapp,10,200000,WA-202602-0004,
+5,2026-04-19 14:29:34,2026-04,Juan García,Valledupar,+57 3851 396 3625,Calle 182 #10-68,entregado,whatsapp,5,175000,WA-202604-0005,Entregar en horario de oficina
+6,2026-02-28 07:26:33,2026-02,Adriana Castaño,Manizales,+57 3140 491 1367,Calle 73 #20-51,sin_entregar,whatsapp,10,270000,WA-202602-0006,
+7,2025-12-26 16:04:12,2025-12,Ana Martínez,Medellín,+57 3923 756 1881,Calle 93 #134-18,sin_entregar,mercadopago,1,22000,MP-202512-0007,Entregar en horario de oficina
+8,2025-12-07 05:48:09,2025-12,Paola Salazar,Bucaramanga,+57 3949 921 8762,Calle 52 #25-12,sin_entregar,whatsapp,2,110000,WA-202512-0008,
+9,2025-11-27 01:37:17,2025-11,Melissa Agudelo,Pasto,+57 3262 665 1793,Calle 30 #58-52,entregado,whatsapp,7,336000,WA-202511-0009,Entregar en horario de oficina
+10,2026-04-29 17:13:30,2026-04,Alejandro Cano,Pereira,+57 3458 907 6914,Calle 49 #1-18,entregado,whatsapp,11,291500,WA-202604-0010,
+11,2026-01-01 22:04:31,2026-01,Natalia Zapata,Pasto,+57 3034 733 9944,Calle 200 #77-58,sin_entregar,whatsapp,5,177000,WA-202601-0011,
+12,2026-03-02 03:43:19,2026-03,Andrés Morales,Medellín,+57 3192 645 1529,Calle 83 #18-58,cancelado,mercadopago,14,595000,MP-202603-0012,Entregar en horario de oficina
+13,2026-04-06 00:43:43,2026-04,Camila Ospina,Armenia,+57 3024 784 1128,Calle 123 #100-36,sin_entregar,whatsapp,9,338000,WA-202604-0013,
+14,2026-04-18 06:37:45,2026-04,Felipe Cardona,Bucaramanga,+57 3749 218 9687,Calle 68 #28-13,entregado,mercadopago,7,299000,MP-202604-0014,
+15,2025-12-08 19:19:23,2025-12,Isabel Moreno,Barranquilla,+57 3932 613 9889,Calle 81 #3-87,entregado,mercadopago,15,399000,MP-202512-0015,
+16,2026-03-15 23:20:36,2026-03,Valentina Torres,Cartagena,+57 3494 108 1943,Calle 172 #30-47,entregado,mercadopago,5,110000,MP-202603-0016,
+17,2025-12-24 04:37:55,2025-12,Nicolás Arbeláez,Pereira,+57 3695 409 1175,Calle 40 #111-15,cancelado,whatsapp,16,609000,WA-202512-0017,
+18,2026-04-25 02:17:49,2026-04,Adriana Castaño,Santa Marta,+57 3514 542 6133,Calle 101 #139-90,entregado,whatsapp,7,201000,WA-202604-0018,Entregar en horario de oficina
+19,2025-12-09 09:09:18,2025-12,Andrés Morales,Ibagué,+57 3994 740 9340,Calle 170 #89-53,entregado,mercadopago,4,88000,MP-202512-0019,
+20,2025-12-20 09:21:37,2025-12,Angélica Bernal,Cúcuta,+57 3310 569 5432,Calle 75 #95-54,sin_entregar,whatsapp,14,510000,WA-202512-0020,Entregar en horario de oficina
+21,2026-02-28 19:36:34,2026-02,Marcela Giraldo,Bogotá,+57 3199 602 3173,Calle 162 #87-85,entregado,whatsapp,16,325000,WA-202602-0021,
+22,2026-01-02 15:33:42,2026-01,Camila Ospina,Cúcuta,+57 3687 264 9169,Calle 103 #129-16,entregado,whatsapp,8,187500,WA-202601-0022,
+23,2025-11-09 23:09:55,2025-11,María López,Valledupar,+57 3052 207 6608,Calle 122 #83-63,cancelado,whatsapp,3,165000,WA-202511-0023,
+24,2026-02-09 15:58:13,2026-02,David Londoño,Pasto,+57 3973 718 9830,Calle 152 #51-55,entregado,whatsapp,14,312500,WA-202602-0024,
+25,2026-03-03 04:08:55,2026-03,Valentina Torres,Ibagué,+57 3230 835 2332,Calle 63 #109-73,cancelado,mercadopago,7,135000,MP-202603-0025,
+26,2025-12-13 10:25:58,2025-12,Alejandro Cano,Ibagué,+57 3063 274 3960,Calle 167 #58-94,sin_entregar,whatsapp,5,210000,WA-202512-0026,Entregar en horario de oficina
+27,2025-11-11 00:17:22,2025-11,Adriana Castaño,Bucaramanga,+57 3513 542 2677,Calle 49 #23-22,entregado,whatsapp,2,36000,WA-202511-0027,
+28,2025-12-27 16:45:42,2025-12,Nicolás Arbeláez,Cartagena,+57 3450 964 8544,Calle 2 #82-40,entregado,mercadopago,13,290000,MP-202512-0028,
+29,2026-03-10 20:01:49,2026-03,Jhon Quintero,Barranquilla,+57 3190 802 6303,Calle 102 #133-80,entregado,whatsapp,4,80000,WA-202603-0029,Entregar en horario de oficina
+30,2026-03-21 20:32:56,2026-03,Daniela Restrepo,Cali,+57 3878 647 1315,Calle 179 #132-84,entregado,whatsapp,7,246000,WA-202603-0030,
+31,2025-12-18 14:08:54,2025-12,Miguel Jiménez,Pasto,+57 3263 717 9834,Calle 135 #64-89,entregado,whatsapp,14,393000,WA-202512-0031,Entregar en horario de oficina
+32,2025-11-14 20:13:01,2025-11,Iván Rincón,Medellín,+57 3735 213 8559,Calle 81 #109-44,sin_entregar,whatsapp,7,140000,WA-202511-0032,
+33,2025-12-04 12:24:16,2025-12,Manuel Ramírez,Cúcuta,+57 3723 913 1661,Calle 88 #35-79,cancelado,mercadopago,3,142000,MP-202512-0033,Entregar en horario de oficina
+34,2026-01-22 16:35:31,2026-01,Angélica Bernal,Bucaramanga,+57 3563 659 6089,Calle 112 #140-78,entregado,whatsapp,5,271000,WA-202601-0034,
+35,2025-12-24 17:29:55,2025-12,Jhon Quintero,Cali,+57 3375 944 4294,Calle 200 #57-72,entregado,mercadopago,7,196000,MP-202512-0035,
+36,2025-11-06 16:57:58,2025-11,Ana Martínez,Pereira,+57 3023 492 8970,Calle 93 #138-71,entregado,whatsapp,5,122500,WA-202511-0036,
+37,2026-03-29 05:52:20,2026-03,Daniela Restrepo,Armenia,+57 3015 398 9867,Calle 126 #30-62,cancelado,whatsapp,1,12000,WA-202603-0037,
+38,2025-11-06 17:06:49,2025-11,Ana Martínez,Medellín,+57 3388 836 1936,Calle 67 #107-24,sin_entregar,mercadopago,12,206000,MP-202511-0038,
+39,2026-01-24 14:18:10,2026-01,Andrés Morales,Bucaramanga,+57 3637 427 7293,Calle 170 #17-42,entregado,mercadopago,9,259000,MP-202601-0039,
+40,2025-11-20 16:44:23,2025-11,Marcela Giraldo,Bucaramanga,+57 3213 651 6096,Calle 148 #71-25,entregado,mercadopago,12,355000,MP-202511-0040,
+41,2026-01-26 14:53:27,2026-01,Luisa Palacios,Cali,+57 3723 226 7660,Calle 125 #82-72,entregado,whatsapp,7,128000,WA-202601-0041,
+42,2025-11-22 08:51:29,2025-11,Andrés Morales,Armenia,+57 3839 524 1167,Calle 69 #95-48,sin_entregar,whatsapp,5,75000,WA-202511-0042,
+43,2025-12-29 04:23:35,2025-12,María López,Medellín,+57 3041 596 9025,Calle 12 #54-40,entregado,whatsapp,3,84000,WA-202512-0043,Entregar en horario de oficina
+44,2026-03-23 07:40:18,2026-03,Angélica Bernal,Bogotá,+57 3887 341 2249,Calle 51 #43-52,sin_entregar,mercadopago,6,180000,MP-202603-0044,
+45,2025-12-29 02:31:09,2025-12,Pedro Sánchez,Barranquilla,+57 3544 505 2689,Calle 139 #62-64,entregado,whatsapp,9,147000,WA-202512-0045,
+46,2026-02-27 11:46:30,2026-02,Nicolás Arbeláez,Cúcuta,+57 3593 259 9001,Calle 161 #3-74,sin_entregar,whatsapp,5,75000,WA-202602-0046,
+47,2026-03-27 17:31:21,2026-03,Nicolás Arbeláez,Cali,+57 3921 147 3307,Calle 112 #126-35,entregado,whatsapp,12,346500,WA-202603-0047,
+48,2026-02-02 01:58:14,2026-02,Melissa Agudelo,Santa Marta,+57 3447 606 2534,Calle 199 #83-92,cancelado,mercadopago,11,120500,MP-202602-0048,Entregar en horario de oficina
+49,2025-11-10 07:17:19,2025-11,Isabel Moreno,Bogotá,+57 3641 673 6779,Calle 85 #67-38,cancelado,whatsapp,7,294000,WA-202511-0049,
+50,2026-03-29 03:35:01,2026-03,Daniela Restrepo,Villavicencio,+57 3246 540 6407,Calle 43 #62-38,entregado,whatsapp,2,36000,WA-202603-0050,
+51,2026-04-21 14:58:52,2026-04,Pedro Sánchez,Armenia,+57 3781 401 5263,Calle 71 #74-83,entregado,whatsapp,15,735000,WA-202604-0051,
+52,2026-04-21 21:56:19,2026-04,Isabel Moreno,Armenia,+57 3558 677 7851,Calle 129 #22-88,entregado,whatsapp,3,66000,WA-202604-0052,
+53,2026-04-12 10:30:29,2026-04,Daniela Restrepo,Cúcuta,+57 3296 783 5351,Calle 108 #104-36,entregado,whatsapp,7,120000,WA-202604-0053,
+54,2025-12-18 01:11:00,2025-12,Ana Martínez,Cartagena,+57 3564 472 4024,Calle 173 #5-82,entregado,whatsapp,13,362000,WA-202512-0054,Entregar en horario de oficina
+55,2026-01-14 07:39:43,2026-01,Isabel Moreno,Cartagena,+57 3476 806 2436,Calle 194 #37-69,entregado,whatsapp,2,70000,WA-202601-0055,
+56,2026-02-19 16:45:45,2026-02,Manuel Ramírez,Bogotá,+57 3381 416 5917,Calle 76 #11-65,entregado,whatsapp,12,326000,WA-202602-0056,
+57,2026-02-09 00:15:19,2026-02,Carlos Rodríguez,Barranquilla,+57 3574 414 8705,Calle 101 #124-35,cancelado,whatsapp,12,490000,WA-202602-0057,
+58,2026-02-18 16:53:46,2026-02,Tatiana Suárez,Medellín,+57 3262 721 8926,Calle 174 #148-15,entregado,whatsapp,7,237000,WA-202602-0058,
+59,2026-03-17 13:30:07,2026-03,Carlos Rodríguez,Cúcuta,+57 3290 287 5323,Calle 60 #147-21,entregado,whatsapp,5,120500,WA-202603-0059,
+60,2025-11-01 18:41:01,2025-11,Laura Fernández,Pasto,+57 3852 362 3782,Calle 45 #120-28,entregado,whatsapp,12,421000,WA-202511-0060,
+61,2026-01-08 21:17:30,2026-01,Diego Navarro,Valledupar,+57 3785 717 5808,Calle 3 #137-52,cancelado,whatsapp,8,336000,WA-202601-0061,
+62,2025-12-22 15:11:16,2025-12,Diego Navarro,Santa Marta,+57 3933 569 1236,Calle 99 #23-62,entregado,whatsapp,4,100000,WA-202512-0062,
+63,2025-12-01 10:34:37,2025-12,Carolina Montes,Armenia,+57 3677 919 6514,Calle 108 #50-94,entregado,mercadopago,12,135500,MP-202512-0063,
+64,2025-12-19 15:32:26,2025-12,Alejandro Cano,Pereira,+57 3878 210 5961,Calle 41 #51-85,entregado,whatsapp,9,203500,WA-202512-0064,
+65,2025-11-12 19:40:41,2025-11,Mauricio Peñaloza,Bogotá,+57 3274 633 4405,Calle 12 #17-43,cancelado,whatsapp,11,484000,WA-202511-0065,
+66,2025-12-21 07:45:00,2025-12,Manuel Ramírez,Medellín,+57 3436 706 4060,Calle 3 #23-10,cancelado,mercadopago,1,38000,MP-202512-0066,
+67,2026-03-20 20:03:55,2026-03,Jhon Quintero,Barranquilla,+57 3535 188 3483,Calle 103 #71-36,cancelado,mercadopago,10,374000,MP-202603-0067,
+68,2025-12-18 20:04:08,2025-12,Paola Salazar,Medellín,+57 3193 643 4103,Calle 169 #143-70,entregado,whatsapp,1,45000,WA-202512-0068,
+69,2025-12-21 04:35:58,2025-12,Dolores Herrera,Armenia,+57 3064 957 2307,Calle 128 #79-40,cancelado,whatsapp,6,87500,WA-202512-0069,
+70,2026-02-27 06:14:03,2026-02,Francisco Ruiz,Ibagué,+57 3897 227 2075,Calle 152 #97-15,entregado,whatsapp,6,205000,WA-202602-0070,Entregar en horario de oficina
+71,2025-12-07 18:25:49,2025-12,Manuel Ramírez,Ibagué,+57 3882 709 5484,Calle 59 #59-23,cancelado,whatsapp,1,18000,WA-202512-0071,
+72,2026-03-10 22:00:40,2026-03,Santiago Gómez,Manizales,+57 3614 701 6787,Calle 94 #125-70,entregado,whatsapp,8,256500,WA-202603-0072,
+73,2026-04-02 03:15:14,2026-04,Santiago Gómez,Medellín,+57 3661 166 7134,Calle 74 #58-39,entregado,whatsapp,4,112000,WA-202604-0073,
+74,2025-12-22 18:05:40,2025-12,Miguel Jiménez,Bucaramanga,+57 3582 194 2690,Calle 43 #7-54,entregado,whatsapp,1,8500,WA-202512-0074,
+75,2026-04-18 18:47:57,2026-04,Esteban Velásquez,Villavicencio,+57 3733 491 3933,Calle 70 #124-29,entregado,whatsapp,9,109000,WA-202604-0075,
+76,2025-12-13 23:08:43,2025-12,Carolina Montes,Santa Marta,+57 3393 889 2941,Calle 24 #13-53,entregado,whatsapp,2,56000,WA-202512-0076,
+77,2025-11-23 02:39:37,2025-11,Mauricio Peñaloza,Ibagué,+57 3326 965 2745,Calle 74 #118-86,entregado,mercadopago,14,402000,MP-202511-0077,
+78,2026-04-14 23:37:07,2026-04,Esteban Velásquez,Medellín,+57 3148 878 5532,Calle 9 #13-30,entregado,whatsapp,5,325000,WA-202604-0078,
+79,2026-01-24 02:15:21,2026-01,Carmen Álvarez,Bucaramanga,+57 3274 744 6432,Calle 36 #130-29,sin_entregar,whatsapp,3,66000,WA-202601-0079,
+80,2026-02-01 04:08:50,2026-01,Santiago Gómez,Armenia,+57 3574 103 9376,Calle 33 #47-96,sin_entregar,mercadopago,12,433000,MP-202601-0080,
+81,2026-01-18 23:25:36,2026-01,Adriana Castaño,Manizales,+57 3326 764 3633,Calle 198 #149-39,entregado,whatsapp,7,294000,WA-202601-0081,
+82,2026-01-15 21:50:35,2026-01,Dolores Herrera,Cúcuta,+57 3880 613 7881,Calle 152 #22-82,sin_entregar,whatsapp,4,160000,WA-202601-0082,
+83,2026-02-11 03:05:50,2026-02,Carlos Rodríguez,Cali,+57 3134 701 6624,Calle 24 #86-53,entregado,whatsapp,16,357000,WA-202602-0083,
+84,2026-01-13 22:10:18,2026-01,Iván Rincón,Manizales,+57 3430 759 2563,Calle 49 #123-43,entregado,whatsapp,2,70000,WA-202601-0084,Entregar en horario de oficina
+85,2025-12-04 14:48:04,2025-12,Manuel Ramírez,Manizales,+57 3165 163 2021,Calle 132 #116-32,cancelado,mercadopago,8,148000,MP-202512-0085,
+86,2025-11-12 20:17:55,2025-11,Pedro Sánchez,Valledupar,+57 3697 348 9398,Calle 125 #43-31,cancelado,mercadopago,5,285000,MP-202511-0086,Entregar en horario de oficina
+87,2025-12-06 03:32:24,2025-12,Andrés Morales,Ibagué,+57 3016 331 9370,Calle 8 #96-55,cancelado,mercadopago,4,48000,MP-202512-0087,
+88,2025-11-01 18:06:50,2025-11,Carlos Rodríguez,Pasto,+57 3394 151 4465,Calle 5 #105-51,cancelado,whatsapp,5,245000,WA-202511-0088,
+89,2025-11-13 01:33:32,2025-11,Esteban Velásquez,Pasto,+57 3699 493 9223,Calle 92 #72-32,entregado,mercadopago,2,77000,MP-202511-0089,Entregar en horario de oficina
+90,2026-03-12 21:06:12,2026-03,Ana Martínez,Valledupar,+57 3442 110 7093,Calle 145 #111-47,sin_entregar,whatsapp,5,110000,WA-202603-0090,
+91,2026-02-07 14:07:25,2026-02,Juan García,Pereira,+57 3859 968 7636,Calle 35 #18-58,entregado,whatsapp,12,628000,WA-202602-0091,
+92,2025-12-15 19:48:05,2025-12,Jhon Quintero,Barranquilla,+57 3189 354 3637,Calle 3 #34-14,entregado,whatsapp,7,303000,WA-202512-0092,
+93,2026-03-28 22:17:59,2026-03,Miguel Jiménez,Manizales,+57 3372 337 1747,Calle 159 #73-87,entregado,whatsapp,10,282000,WA-202603-0093,
+94,2026-01-11 16:52:28,2026-01,Esteban Velásquez,Ibagué,+57 3648 752 7458,Calle 168 #87-46,cancelado,mercadopago,9,273000,MP-202601-0094,
+95,2026-02-25 13:44:31,2026-02,Iván Rincón,Villavicencio,+57 3278 195 1225,Calle 121 #137-65,entregado,whatsapp,8,366000,WA-202602-0095,
+96,2026-03-08 15:50:38,2026-03,Carlos Rodríguez,Cartagena,+57 3192 760 2574,Calle 68 #58-33,entregado,whatsapp,5,159000,WA-202603-0096,
+97,2026-01-12 08:20:03,2026-01,Natalia Zapata,Pasto,+57 3872 143 4998,Calle 109 #33-10,sin_entregar,whatsapp,3,25500,WA-202601-0097,Entregar en horario de oficina
+98,2025-12-22 02:35:12,2025-12,Camila Ospina,Bucaramanga,+57 3265 609 9080,Calle 167 #130-11,cancelado,whatsapp,5,147000,WA-202512-0098,Entregar en horario de oficina
+99,2026-01-08 00:54:05,2026-01,Marcela Giraldo,Santa Marta,+57 3163 140 5828,Calle 183 #26-21,entregado,whatsapp,11,272000,WA-202601-0099,
+100,2026-02-08 10:11:11,2026-02,Nicolás Arbeláez,Bucaramanga,+57 3086 746 7451,Calle 77 #63-30,entregado,whatsapp,4,88000,WA-202602-0100,

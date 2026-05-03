@@ -1,0 +1,61 @@
+﻿id,fecha,mes,nombre,email,telefono,ciudad,empresa,tipo_consulta
+1,2026-04-16 21:56:09,2026-04,Tatiana Suárez,tatiana.suarez954@gmail.com,+57 3269 467 8661,Barranquilla,Centro Médico Salud Total,Información de productos
+2,2025-11-14 15:43:23,2025-11,Iván Rincón,ivan.rincon363@hotmail.com,+57 3816 914 2627,Santa Marta,Clínica del Cuerpo,Soporte técnico
+3,2026-02-26 17:06:25,2026-02,Natalia Zapata,natalia.zapata705@gmail.com,+57 3646 884 7829,Valledupar,Centro Médico Salud Total,Cotización empresarial
+4,2026-04-01 22:41:17,2026-04,Sebastián Vargas,sebastian.vargas733@gmail.com,+57 3799 299 4572,Pasto,,Consulta de precios
+5,2025-12-16 13:30:14,2025-12,Felipe Cardona,felipe.cardona378@gmail.com,+57 3385 685 8353,Bogotá,Centro Médico Salud Total,Información de productos
+6,2026-03-17 08:14:29,2026-03,Francisco Ruiz,francisco.ruiz983@gmail.com,+57 3275 763 2048,Medellín,Bienestar y Salud,Disponibilidad de stock
+7,2026-03-09 21:35:08,2026-03,Esteban Velásquez,esteban.velasquez188@hotmail.com,+57 3134 311 5064,Ibagué,Derma & Spa,Cotización empresarial
+8,2025-11-04 18:57:08,2025-11,Valentina Torres,valentina.torres641@yahoo.com,+57 3465 651 8570,Armenia,,Consulta de precios
+9,2026-02-11 14:35:14,2026-02,Rosa Pérez,rosa.perez60@hotmail.com,+57 3410 278 7988,Santa Marta,Clínica Juvenil,Pedido al por mayor
+10,2026-04-17 07:48:05,2026-04,Carolina Montes,carolina.montes73@hotmail.com,+57 3152 888 5625,Bogotá,,Soporte técnico
+11,2025-12-05 22:41:07,2025-12,Carlos Rodríguez,carlos.rodriguez884@outlook.com,+57 3455 891 4390,Armenia,Medicina Estética Plus,Disponibilidad de stock
+12,2026-03-05 23:41:54,2026-03,Luisa Palacios,luisa.palacios664@outlook.com,+57 3050 426 5510,Cali,Instituto Médico Estético,Disponibilidad de stock
+13,2026-02-04 03:44:43,2026-02,Pedro Sánchez,pedro.sanchez522@hotmail.com,+57 3110 248 4900,Cali,Bienestar y Salud,Disponibilidad de stock
+14,2026-03-12 23:11:48,2026-03,Tatiana Suárez,tatiana.suarez175@outlook.com,+57 3384 343 7909,Ibagué,,Información de productos
+15,2026-01-30 06:41:54,2026-01,Andrés Morales,andres.morales602@outlook.com,+57 3712 202 5806,Bogotá,,Disponibilidad de stock
+16,2026-04-03 09:05:06,2026-04,Juliana Ríos,juliana.rios864@outlook.com,+57 3077 443 8679,Armenia,SPA Revive,Pedido al por mayor
+17,2025-11-04 19:10:37,2025-11,Manuel Ramírez,manuel.ramirez961@hotmail.com,+57 3896 251 3673,Cúcuta,Centro Estético Premium,Soporte técnico
+18,2026-03-17 20:12:27,2026-03,Adriana Castaño,adriana.castano850@hotmail.com,+57 3494 643 3272,Armenia,Clínica Juvenil,Cotización empresarial
+19,2026-04-08 13:36:34,2026-04,Antonio Díaz,antonio.diaz432@yahoo.com,+57 3441 552 1902,Bogotá,,Consulta de precios
+20,2026-02-03 11:21:20,2026-02,Iván Rincón,ivan.rincon366@outlook.com,+57 3060 766 1232,Ibagué,Clínica Juvenil,Soporte técnico
+21,2026-04-20 14:22:33,2026-04,Jhon Quintero,jhon.quintero247@outlook.com,+57 3174 441 6086,Pereira,Centro de Belleza Moderna,Disponibilidad de stock
+22,2025-11-23 07:06:05,2025-11,Carolina Montes,carolina.montes696@outlook.com,+57 3711 402 9647,Barranquilla,Medicina Estética Plus,Cotización empresarial
+23,2026-01-15 18:16:33,2026-01,Luisa Palacios,luisa.palacios303@gmail.com,+57 3350 753 4760,Armenia,Derma & Spa,Consulta de precios
+24,2026-04-07 17:39:38,2026-04,Valentina Torres,valentina.torres337@gmail.com,+57 3073 318 8501,Valledupar,Clínica Estética Bella,Disponibilidad de stock
+25,2026-03-21 20:40:04,2026-03,Natalia Zapata,natalia.zapata519@hotmail.com,+57 3350 931 5129,Cali,Centro de Belleza Moderna,Disponibilidad de stock
+26,2025-11-22 14:18:58,2025-11,Alejandro Cano,alejandro.cano452@gmail.com,+57 3412 373 5581,Cúcuta,,Pedido al por mayor
+27,2025-12-05 16:16:20,2025-12,Tatiana Suárez,tatiana.suarez503@hotmail.com,+57 3320 988 7938,Bucaramanga,Derma & Spa,Consulta de precios
+28,2026-02-19 17:21:07,2026-02,Laura Fernández,laura.fernandez239@yahoo.com,+57 3060 933 7306,Santa Marta,Derma & Spa,Consulta de precios
+29,2025-12-08 18:36:29,2025-12,Dolores Herrera,dolores.herrera167@outlook.com,+57 3855 216 8276,Bucaramanga,,Información de productos
+30,2026-01-20 11:51:50,2026-01,Nicolás Arbeláez,nicolas.arbelaez309@gmail.com,+57 3953 613 2629,Bogotá,Clínica del Cuerpo,Pedido al por mayor
+31,2025-12-29 01:08:07,2025-12,Francisco Ruiz,francisco.ruiz425@outlook.com,+57 3024 795 7784,Valledupar,Clínica Estética Bella,Consulta de precios
+32,2026-03-19 04:06:07,2026-03,Daniela Restrepo,daniela.restrepo8@hotmail.com,+57 3451 642 1929,Villavicencio,Clínica Estética Bella,Soporte técnico
+33,2026-04-19 03:46:05,2026-04,Angélica Bernal,angelica.bernal97@hotmail.com,+57 3664 120 5455,Bucaramanga,Derma & Spa,Consulta de precios
+34,2026-01-13 11:21:33,2026-01,Antonio Díaz,antonio.diaz947@gmail.com,+57 3258 722 3068,Manizales,,Cotización empresarial
+35,2025-11-16 22:19:40,2025-11,Sebastián Vargas,sebastian.vargas622@outlook.com,+57 3114 279 8107,Manizales,Centro Médico Salud Total,Cotización empresarial
+36,2026-04-02 21:05:47,2026-04,Sebastián Vargas,sebastian.vargas984@gmail.com,+57 3619 118 9649,Santa Marta,Medicina Estética Plus,Soporte técnico
+37,2026-02-07 18:42:50,2026-02,Cristian Muñoz,cristian.munoz738@hotmail.com,+57 3665 602 6962,Pasto,,Información de productos
+38,2026-02-13 00:20:30,2026-02,Carolina Montes,carolina.montes391@yahoo.com,+57 3791 951 4807,Manizales,,Disponibilidad de stock
+39,2025-11-18 22:24:50,2025-11,Francisco Ruiz,francisco.ruiz64@yahoo.com,+57 3079 380 6771,Ibagué,,Pedido al por mayor
+40,2026-02-07 22:38:27,2026-02,Marcela Giraldo,marcela.giraldo126@hotmail.com,+57 3386 501 2806,Ibagué,,Disponibilidad de stock
+41,2026-01-30 21:17:11,2026-01,Esteban Velásquez,esteban.velasquez632@outlook.com,+57 3737 752 1676,Barranquilla,Clínica Estética Bella,Consulta de precios
+42,2025-12-11 10:16:18,2025-12,Esteban Velásquez,esteban.velasquez621@outlook.com,+57 3180 180 2019,Manizales,Medicina Estética Plus,Cotización empresarial
+43,2026-02-14 10:09:36,2026-02,Dolores Herrera,dolores.herrera391@hotmail.com,+57 3121 926 6777,Bucaramanga,Centro Estético Premium,Soporte técnico
+44,2026-03-16 04:17:56,2026-03,Felipe Cardona,felipe.cardona8@hotmail.com,+57 3324 150 4388,Pereira,Clínica Estética Bella,Soporte técnico
+45,2026-02-18 09:52:51,2026-02,Laura Fernández,laura.fernandez935@gmail.com,+57 3774 947 1950,Pasto,Centro de Belleza Moderna,Soporte técnico
+46,2026-03-02 00:16:37,2026-03,Angélica Bernal,angelica.bernal933@hotmail.com,+57 3079 175 7046,Armenia,Clínica Juvenil,Información de productos
+47,2026-03-01 01:37:49,2026-02,Juliana Ríos,juliana.rios659@outlook.com,+57 3189 989 1647,Bucaramanga,,Cotización empresarial
+48,2026-04-16 13:06:12,2026-04,David Londoño,david.londono478@hotmail.com,+57 3111 136 2645,Santa Marta,Estética Avanzada,Pedido al por mayor
+49,2026-01-25 05:03:11,2026-01,Jhon Quintero,jhon.quintero934@gmail.com,+57 3278 824 2463,Cúcuta,,Consulta de precios
+50,2026-03-14 02:46:59,2026-03,Andrés Morales,andres.morales75@yahoo.com,+57 3520 276 5760,Bogotá,Bienestar y Salud,Consulta de precios
+51,2025-12-15 21:19:03,2025-12,Carlos Rodríguez,carlos.rodriguez279@yahoo.com,+57 3332 378 7215,Pereira,,Información de productos
+52,2026-01-17 17:15:41,2026-01,Luisa Palacios,luisa.palacios333@hotmail.com,+57 3616 346 8805,Barranquilla,Clínica Juvenil,Cotización empresarial
+53,2026-02-27 12:00:55,2026-02,Manuel Ramírez,manuel.ramirez804@hotmail.com,+57 3080 435 1796,Barranquilla,Clínica del Cuerpo,Consulta de precios
+54,2025-11-23 20:43:26,2025-11,Sebastián Vargas,sebastian.vargas666@hotmail.com,+57 3891 403 3855,Bucaramanga,SPA Revive,Información de productos
+55,2026-01-18 07:57:29,2026-01,Jhon Quintero,jhon.quintero147@outlook.com,+57 3533 670 5538,Medellín,Clínica Estética Bella,Disponibilidad de stock
+56,2026-03-26 20:05:41,2026-03,Ana Martínez,ana.martinez725@yahoo.com,+57 3711 617 1880,Bucaramanga,Centro Médico Salud Total,Disponibilidad de stock
+57,2025-12-29 10:48:08,2025-12,Nicolás Arbeláez,nicolas.arbelaez832@gmail.com,+57 3785 509 9123,Manizales,,Soporte técnico
+58,2026-02-15 00:42:34,2026-02,Mauricio Peñaloza,mauricio.penaloza47@hotmail.com,+57 3145 430 2506,Cúcuta,,Soporte técnico
+59,2026-01-03 21:15:36,2026-01,Antonio Díaz,antonio.diaz474@yahoo.com,+57 3797 778 9164,Pereira,Instituto Médico Estético,Soporte técnico
+60,2026-02-27 22:51:47,2026-02,Valentina Torres,valentina.torres601@yahoo.com,+57 3049 412 8023,Santa Marta,Clínica Estética Bella,Consulta de precios
